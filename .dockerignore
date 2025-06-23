@@ -1,0 +1,40 @@
+# Folders and files to ignore in Docker builds
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Cache e logs
+.pytest_cache/
+.coverage
+*.log
+*.sqlite
+*.db
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Arquivos temporários e de sistema
+*.tmp
+*.bak
+*.DS_Store
