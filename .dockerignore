@@ -31,7 +31,7 @@ ENV/
 .gitignore
 
 # Docker
-Dockerfile
+compose/Dockerfile
 docker-compose.yml
 
 # Arquivos temporários e de sistema
