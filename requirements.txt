@@ -1,18 +1,18 @@
 
 # FastAPI and Uvicorn dependencies
-# ----------------------------
+# ------------------------------------------------------------------------------
 fastapi==0.115.13 # https://github.com/fastapi/fastapi
 uvicorn==0.34.3   # https://github.com/encode/uvicorn
 
 # Database dependencies
-# ----------------------------
+# ------------------------------------------------------------------------------
 pydantic==2.11.7 # https://github.com/pydantic/pydantic
 pymongo==4.13.2  # https://github.com/mongodb/mongo-python-driver
 
 # ORM dependencies
-# ----------------------------
+# ------------------------------------------------------------------------------
 sqlalchemy==2.0.41 # https://github.com/sqlalchemy/sqlalchemy
 
 # Env variables management
-# ----------------------------
+# ------------------------------------------------------------------------------
 python-dotenv==1.1.0 # https://github.com/theskumar/python-dotenv

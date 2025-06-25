@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install requirements
-COPY . .
+COPY requirements.txt .
 RUN pip wheel --wheel-dir /usr/src/app/wheels -r requirements.txt
 
 # Runtime stage
