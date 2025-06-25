@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   fast_api:
+    image: fast_api
     container_name: fast_api
     build:
       context: .

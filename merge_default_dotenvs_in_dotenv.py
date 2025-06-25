@@ -1,6 +1,5 @@
 """
-Run one of the following (according to your environment) to generate a default .env file
-- `python merge_default_dotenvs_in_dotenv.py local`
+Run ``python merge_default_dotenvs_in_dotenv.py`` to generate a default .env file
 """
 
 import os
