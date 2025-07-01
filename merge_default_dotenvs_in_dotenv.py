@@ -22,8 +22,8 @@ if __name__ == "__main__":
     BASE_DIR = Path(__file__).parent.resolve()
     DOTENVS_DIR = BASE_DIR / ".envs"
     DOTENV_FILES = [
-        DOTENVS_DIR / ".fastapi",
-        DOTENVS_DIR / ".mongo",
+        DOTENVS_DIR / "fastapi",
+        DOTENVS_DIR / ".mysql",
     ]
     DOTENV_FILE = BASE_DIR / ".env"
 

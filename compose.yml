@@ -6,39 +6,45 @@ services:
     container_name: fast_api
     build:
       context: .
-      dockerfile: ./compose/Dockerfile
+      dockerfile: compose/fastapi/Dockerfile
     volumes:
       - .:/app:z
-    ports:
-      - "8000:8000"
     env_file:
       - ./.envs/.fastapi
-      - ./.envs/.mongo
+      - .envs/.mysql
     depends_on:
-      - mongo
+      - mysql
     command: /start
-
-  mongo:
-    container_name: mongo
-    image: mongo:latest
-    restart: unless-stopped
-    env_file:
-      - ./.envs/.mongo
     ports:
-      - "27017:27017"
+      - "8000:8000"
+
+  mysql:
+    container_name: mysql
+    build:
+      context: .
+      dockerfile: ./compose/mysql/Dockerfile
+    restart: always
+    env_file:
+      - ./.envs/.mysql
     volumes:
-      - mongo_data:/data/db
-
-  mongo-express:
-    container_name: mongo-admin
-    image: mongo-express
-    restart: unless-stopped
+      - mysql_data:/var/lib/mysql
+      - mysql_sata_backups:/backups
+      - ./compose/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-        - "8081:8081"
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
     env_file:
-      - ./.envs/.mongo
+      - ./.envs/.mysql
+    volumes:
+      - /sessions
     depends_on:
-      - mongo
+        - mysql
+    ports:
+      - "8080:80"
 
 volumes:
-  mongo_data:
+    mysql_data: {}
+    mysql_sata_backups: {}

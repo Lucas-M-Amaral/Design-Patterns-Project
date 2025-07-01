@@ -3,12 +3,9 @@ FROM python:3.11.9-slim-bullseye AS python-build-stage
 
 # System dependencies for build stage
 RUN apt-get update && apt-get install -y \
-    binutils \
-    libproj-dev \
-    gdal-bin \
     build-essential \
-    libpq-dev \
     python3-dev \
+    default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install requirements
@@ -25,11 +22,9 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR ${APP_HOME}
 
-# Runtime system dependencies
+# Install only minimal system dependencies (no libpq, gdal, etc.)
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    gettext \
-    libgdal-dev \
+    default-mysql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,13 +34,13 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
     && rm -rf /wheels
 
 # Copy application files
-COPY . ${APP_HOME}
+COPY .. ${APP_HOME}
 
-COPY ./compose/entrypoint /entrypoint
+# Entrypoint and start scripts
+COPY ./compose/fastapi/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint && chmod +x /entrypoint
 
-COPY ./compose/start /start
-RUN sed -i 's/\r$//g' /start
-RUN chmod +x /start
+COPY ./compose/fastapi/start /start
+RUN sed -i 's/\r$//g' /start && chmod +x /start
 
 ENTRYPOINT ["/entrypoint"]
