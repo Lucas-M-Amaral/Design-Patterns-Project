@@ -13,14 +13,14 @@ export DATABASE_URL="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT
 python << END
 import sys
 import time
-import pymongo
+import motor
 
 suggest_unrecoverable_after = 30
 start = time.time()
 
 while True:
     try:
-        client = pymongo.MongoClient("${DATABASE_URL}")
+        client = pymongo.AsyncMongoClient(DATABASE_URL)
         client.admin.command("ping")
         break
     except pymongo.errors.ConnectionFailure as error:

@@ -1,7 +1,7 @@
-
 # FastAPI and Uvicorn dependencies
 # ------------------------------------------------------------------------------
 fastapi==0.115.13 # https://github.com/fastapi/fastapi
+fastapi-users[beanie]==14.0.1  # https://github.com/fastapi-users/fastapi-users
 uvicorn==0.34.3   # https://github.com/encode/uvicorn
 
 # Database dependencies
@@ -9,9 +9,9 @@ uvicorn==0.34.3   # https://github.com/encode/uvicorn
 pydantic==2.11.7 # https://github.com/pydantic/pydantic
 pymongo==4.13.2  # https://github.com/mongodb/mongo-python-driver
 
-# ORM dependencies
+# ODM (Object Document Mapper) for MongoDB
 # ------------------------------------------------------------------------------
-sqlalchemy==2.0.41 # https://github.com/sqlalchemy/sqlalchemy
+beanie==1.30.0  # https://github.com/BeanieODM/beanie
 
 # Env variables management
 # ------------------------------------------------------------------------------
