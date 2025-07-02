@@ -14,6 +14,6 @@ BACKUP_FILE_PREFIX=backup
 # PHPMYADMIN
 # ------------------------------------------------------------------------------
 PMA_ARBITRARY=1
-PMA_HOST=local_mysql
+PMA_HOST=mysql
 PMA_USER=root
 PMA_PASSWORD=zGDz21lfWeTtvGWtNz3XOAtg3Ta14OtNqRAbhWDw6VfJEtVYLTLfFmpVckStnHW6
