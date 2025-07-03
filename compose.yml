@@ -26,7 +26,7 @@ services:
       - ./.envs/.mysql
     volumes:
       - mysql_data:/var/lib/mysql
-      - mysql_sata_backups:/backups
+      - mysql_data_backups:/backups
       - ./compose/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
@@ -44,4 +44,4 @@ services:
 
 volumes:
     mysql_data: {}
-    mysql_sata_backups: {}
+    mysql_data_backups: {}
