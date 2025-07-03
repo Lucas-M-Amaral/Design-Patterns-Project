@@ -4,7 +4,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-exec uvicorn main:app \
+exec uvicorn app.main:app \
     --host "$APP_HOST" \
     --port "$APP_PORT" \
     --reload \

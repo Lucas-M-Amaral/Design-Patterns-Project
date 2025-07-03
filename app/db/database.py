@@ -1,7 +1,9 @@
 import os
 import dotenv
 from collections.abc import AsyncGenerator
+from fastapi_users.db import SQLAlchemyUserDatabase
 
+from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     AsyncSession,
@@ -25,8 +27,20 @@ async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 """sqlalchemy.ext.asyncio.async_sessionmaker: Async session maker for database operations."""
 
 
-# Database Operations
+# Database Classes and Functions
 # ------------------------------------------------------------------------------
+class UserDatabase(SQLAlchemyUserDatabase):
+    """Custom user database for the application."""
+
+    async def get_all(self, offset: int = 0, limit: int = 100, user_type: str | None = None):
+        """Get all users with pagination."""
+        stmt = select(self.user_table).offset(offset).limit(limit)
+        if user_type:
+            stmt = stmt.where(self.user_table.user_type == user_type) # type: ignore
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+
 async def create_db_and_tables():
     """Create the database and tables if they do not exist."""
     async with engine.begin() as conn:

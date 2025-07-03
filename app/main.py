@@ -1,12 +1,11 @@
-import uuid
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi_users import FastAPIUsers
 
 from app.db.database import create_db_and_tables
-from app.models.users import User, get_user_manager
+
+from app.models.users import user_routers
+from app.controllers.users_controller import router
 from app.schemas.user_schemas import UserCreate, UserRead, UserUpdate
-from app.utils.token import auth_backend
 
 @asynccontextmanager
 async def lifespan(app: FastAPI): # noqa
@@ -26,13 +25,6 @@ app = FastAPI(
 """FastAPI: application instance for the Course Platform API."""
 
 
-fastapi_users = FastAPIUsers[User, uuid.UUID](
-    get_user_manager,
-    [auth_backend],
-)
-"""FastAPIUsers: Instance for managing user authentication and authorization."""
-
-
 # App routers
 # ------------------------------------------------------------------------------
 @app.get("/", name="root", tags=["root"])
@@ -40,25 +32,29 @@ async def root():
     return {"welcome": "Course Platform API"}
 
 app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
+    router=user_routers["auth"],
     prefix="/auth/jwt",
     tags=["auth"],
 )
 
 app.include_router(
-    fastapi_users.get_register_router(
+    router=user_routers["register"](
         UserRead,
         UserCreate,
-),
+    ),
     prefix="/auth",
     tags=["auth"],
 )
 
 app.include_router(
-    fastapi_users.get_users_router(
+    router=user_routers["my-data"](
         UserRead,
         UserUpdate,
     ),
-    prefix="/users",
-    tags=["users"],
+    prefix="/my-data",
+    tags=["my-data"],
+)
+
+app.include_router(
+    router=router,
 )
