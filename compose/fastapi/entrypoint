@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+MYSQL_USER="${MYSQL_USER:-mysql}"
+
+export DATABASE_URL="${DATABASE_URL}"
+
+echo "Awaiting for MySQL to be available..."
+
+attempts=0
+until mysqladmin ping -h"${MYSQL_HOST}" -P"${MYSQL_PORT}" -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" --silent; do
+  attempts=$((attempts + 1))
+  echo "Attempt ${attempts}: MySQL is..."
+  if [ "$attempts" -ge 30 ]; then
+    echo "Error: MySQL is not available after 30 attempts."
+    exit 1
+  fi
+  sleep 1
+done
+
+echo "MySQL is available!"
+
+exec "$@"

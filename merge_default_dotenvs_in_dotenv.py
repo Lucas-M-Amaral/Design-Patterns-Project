@@ -23,7 +23,7 @@ if __name__ == "__main__":
     DOTENVS_DIR = BASE_DIR / ".envs"
     DOTENV_FILES = [
         DOTENVS_DIR / ".fastapi",
-        DOTENVS_DIR / ".mongo",
+        DOTENVS_DIR / ".mysql",
     ]
     DOTENV_FILE = BASE_DIR / ".env"
 

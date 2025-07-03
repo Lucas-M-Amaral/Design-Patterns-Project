@@ -31,7 +31,7 @@ ENV/
 .gitignore
 
 # Docker
-compose/Dockerfile
+compose/fastapi/Dockerfile
 docker-compose.yml
 
 # Arquivos temporários e de sistema
