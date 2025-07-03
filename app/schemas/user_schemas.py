@@ -1,47 +1,36 @@
 import uuid
-
 from fastapi_users import schemas
 
+from app.models.users import UserTypeEnum
 
-class UserCreateSchema(schemas.BaseUserCreate[uuid.UUID]):
+
+class UserCreate(schemas.BaseUserCreate):
     """
     Schema for creating a new user. This schema includes
     fields for first name, last name, and user type.
-
-    Attributes:
-        first_name (str): The first name of the user.
-        last_name (str): The last name of the user.
-        user_type (str): The type of user, default is "S" for Student.
     """
+    password: str
     first_name: str
     last_name: str
-    user_type: str = "S" # Default to Student
+    user_type: str = UserTypeEnum.STUDENT.value
+    is_verified: bool = False
+    is_active: bool = True
+    is_superuser: bool = False
 
 
-class UserUpdateSchema(schemas.BaseUserUpdate[uuid.UUID]):
+class UserUpdate(schemas.BaseUserUpdate):
     """
     Schema for updating an existing user. This schema includes
     fields for first name and last name.
-
-    Attributes:
-        first_name (str): The first name of the user.
-        last_name (str): The last name of the user.
     """
-    first_name: str
-    last_name: str
+    first_name: str | None = None
+    last_name: str | None = None
 
 
-class UserReadSchema(schemas.BaseUser[uuid.UUID]):
+class UserRead(schemas.BaseUser[uuid.UUID]):
     """
     Schema for reading user information. This schema includes
     fields for user ID, email, first name, last name, and user type.
-
-    Attributes:
-        id (uuid.UUID): The unique identifier of the user.
-        email (str): The email address of the user.
-        first_name (str): The first name of the user.
-        last_name (str): The last name of the user.
-        user_type (str): The type of user, e.g., "I" for Instructor or "S" for Student.
     """
     id: uuid.UUID
     email: str
