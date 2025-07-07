@@ -1,6 +1,0 @@
-# FastAPI
-# ------------------------------------------------------------------------------
-APP_HOST=0.0.0.0
-APP_PORT=8000
-APP_RELOAD=True
-SECRET_KEY=aY2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7

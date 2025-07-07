@@ -1,0 +1,19 @@
+# MySQL
+# ------------------------------------------------------------------------------
+MYSQL_HOST=mysql
+MYSQL_PORT=3306
+MYSQL_DATABASE=database
+MYSQL_USER=db_admin
+MYSQL_PASSWORD=zGDz21lfWeTtvGWtNz3XOAtg3Ta14OtNqRAbhWDw6VfJEtVYLTLfFmpVckStnHW6
+MYSQL_ROOT_PASSWORD=zGDz21lfWeTtvGWtNz3XOAtg3Ta14OtNqRAbhWDw6VfJEtVYLTLfFmpVckStnHW6
+
+DATABASE_URL=mysql+asyncmy://db_admin:zGDz21lfWeTtvGWtNz3XOAtg3Ta14OtNqRAbhWDw6VfJEtVYLTLfFmpVckStnHW6@mysql:3306/database
+BACKUP_DIR_PATH=/backups
+BACKUP_FILE_PREFIX=backup
+
+# PHPMYADMIN
+# ------------------------------------------------------------------------------
+PMA_ARBITRARY=1
+PMA_HOST=mysql
+PMA_USER=root
+PMA_PASSWORD=zGDz21lfWeTtvGWtNz3XOAtg3Ta14OtNqRAbhWDw6VfJEtVYLTLfFmpVckStnHW6
