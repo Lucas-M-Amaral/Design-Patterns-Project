@@ -16,6 +16,7 @@ class LessonCreate(BaseModel):
     parent_id: int | None = Field(None, description="ID of the parent module if this is a sub-lesson")
     prerequisite_id: int | None = Field(None, description="ID of the lesson that must be completed before this one")
 
+
 class LessonUpdate(BaseModel):
     """Schema for updating a lesson."""
     title: str | None = Field(None, max_length=255, description="New title for the lesson")
@@ -26,6 +27,7 @@ class LessonUpdate(BaseModel):
     quiz_data: dict | None = Field(None, description="Updated quiz data structure")
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class LessonRead(BaseModel):
     """Schema for reading a lesson."""
@@ -42,14 +44,16 @@ class LessonRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class CourseCreate(BaseModel, Generic[T]):
     """Schema for creating a course."""
     title: str = Field(..., max_length=255, description="Title of the course")
     description: str | None = Field(None, max_length=2000, description="Detailed course description")
     price: float = Field(..., ge=0, description="Price of the course in USD")
     is_active: bool = Field(True, description="Whether the course is available for enrollment")
-    instructor_id: int = Field(..., description="ID of the user who teaches this course")
+    instructor_id: int | None = Field(None, description="Instructor ID (optional as it's set by authenticated user)")
     lessons: List[T] = Field(default_factory=list, description="List of lessons included in this course")
+
 
 class CourseUpdate(BaseModel):
     """Schema for updating a course."""
@@ -59,6 +63,7 @@ class CourseUpdate(BaseModel):
     is_active: bool | None = Field(None, description="Set course availability status")
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class CourseRead(BaseModel, Generic[T]):
     """Schema for reading a course."""
@@ -71,6 +76,7 @@ class CourseRead(BaseModel, Generic[T]):
     lessons: List[T] = Field(default_factory=list, description="List of lessons in this course")
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class CoursesTeaching(BaseModel):
     """Schema for reading courses that an instructor is teaching."""

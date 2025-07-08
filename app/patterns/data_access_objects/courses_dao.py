@@ -20,23 +20,21 @@ class CourseDAO:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_course(
-            self,
-            course_data: CourseCreate[LessonCreate],
-            instructor_id: int
-    ) -> CourseRead[LessonRead]:
+    async def create_course(self, course_data: CourseCreate[LessonCreate]) -> CourseRead[LessonRead]:
         """Create a new course with the provided data."""
-        stmt = select(Course).where(Course.title == course_data.title)
+        stmt = (select(Course)
+            .where(Course.title == course_data.title)
+            .where(Course.instructor_id == course_data.instructor_id)
+        )
         result = await self.session.execute(stmt)
         existing_course = result.scalars().first()
         if existing_course:
-            raise ValueError("Course with this title already exists")
+            raise ValueError("Course with the same title and instructor already exists")
 
         course_dict = course_data.model_dump(exclude={"lessons"})
         lessons = [Lesson(**item.model_dump()) for item in course_data.lessons]
 
         course = Course(**course_dict)
-        course.instructor_id = instructor_id
         course.lessons = lessons
         self.session.add(course)
         await self.session.commit()

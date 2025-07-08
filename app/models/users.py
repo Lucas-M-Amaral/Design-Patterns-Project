@@ -9,7 +9,7 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_async_session, UserDatabase
-from app.models.courses import Course, Lesson
+from app.models.courses import Course
 from app.utils.token import auth_backend
 from app.utils.models import Base
 

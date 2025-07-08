@@ -28,9 +28,14 @@ async def create_course(
             detail="You do not have permission to create a course."
         )
     try:
-        return await bo.create_course(course_data, current_user.id)
+        return await bo.create_course(
+            course_data=course_data,
+            instructor_id=current_user.id,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @courses_router.get("/", response_model=PaginatedResponse[CourseRead[LessonRead]])
@@ -41,13 +46,16 @@ async def get_all_courses(
     per_page: int = Query(10, le=100),
 ):
     """Get a paginated list of all business_objects."""
-    items = await bo.get_all_courses()
-    return PaginatedResponse[CourseRead[LessonRead]](
-        page=page,
-        per_page=per_page,
-        total=len(items),
-        items=items
-    )
+    try:
+        items = await bo.get_all_courses()
+        return PaginatedResponse[CourseRead[LessonRead]](
+            page=page,
+            per_page=per_page,
+            total=len(items),
+            items=items
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @courses_router.get("/{course_id}", response_model=CourseRead[LessonRead])
@@ -57,10 +65,12 @@ async def get_course_by_id(
     current_user: User = Depends(fastapi_users.current_user()),  # noqa
 ):
     """Get the structure of a course by its ID."""
-    course = await bo.get_course_by_id(course_id)
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-    return course
+    try:
+        return await bo.get_course_by_id(course_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @courses_router.patch("/{course_id}", response_model=CourseUpdate)
@@ -77,9 +87,11 @@ async def update_course(
             detail="You do not have permission to update this course."
         )
     try:
-        return await bo.update_course(course_id, course_data)
+        return await bo.update_course(course_id, current_user.id, course_data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @courses_router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -89,12 +101,17 @@ async def delete_course(
     current_user: User = Depends(fastapi_users.current_user()),
 ):
     """Delete a course by its ID."""
-    if not current_user.is_instructor:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete this course."
-        )
-    await bo.delete(course_id)
+    try:
+        if not current_user.is_instructor:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete this course."
+            )
+        await bo.delete_course(course_id, current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @courses_router.post("/{course_id}/lessons", response_model=LessonRead)
@@ -114,6 +131,8 @@ async def create_lesson(
         return await bo.create_lessons(course_id, current_user.id, lesson_data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @courses_router.delete("/{course_id}/lessons/{lesson_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -124,9 +143,14 @@ async def delete_lesson(
     current_user: User = Depends(fastapi_users.current_user()),
 ):
     """Delete a lesson from a course."""
-    if not current_user.is_instructor:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete lessons from this course."
-        )
-    await bo.delete_lessons(course_id, current_user.id, lesson_id)
+    try:
+        if not current_user.is_instructor:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete lessons from this course."
+            )
+        await bo.delete_lessons(course_id, current_user.id, lesson_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

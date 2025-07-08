@@ -40,7 +40,8 @@ class CourseBO:
         """Create a new course with the provided data."""
         if course_data.price < 0:
             raise ValueError("Course price cannot be negative")
-        return await self.course_dao.create_course(course_data, instructor_id)
+        course_data.instructor_id = instructor_id
+        return await self.course_dao.create_course(course_data)
 
     async def get_course_by_id(self, course_id: int) -> Optional[CourseRead[LessonRead]]:
         """Get the structure of a course by its ID."""
@@ -52,14 +53,29 @@ class CourseBO:
         """Get a paginated list of all business_objects."""
         return await self.course_dao.get_all_courses(offset, limit)
 
-    async def update_course(self, course_id: int, course_data: CourseUpdate) -> CourseRead[LessonRead]:
+    async def update_course(
+            self,
+            course_id: int,
+            instructor_id: int,
+            course_data: CourseUpdate
+    ) -> CourseRead[LessonRead]:
         """Update a course with the given data."""
         if course_data.price is not None and course_data.price < 0:
             raise ValueError("Course price cannot be negative")
+        course = await self.course_dao.get_course_by_id(course_id)
+        if not course:
+            raise ValueError("Course not found")
+        if course.instructor_id != instructor_id:
+            raise ValueError("You do not have permission to update this course")
         return await self.course_dao.update_course(course_id, course_data)
 
-    async def delete(self, course_id: int):
+    async def delete_course(self, course_id: int, instructor_id: int):
         """Delete a course by its ID."""
+        course = await self.course_dao.get_course_by_id(course_id)
+        if not course:
+            raise ValueError("Course not found")
+        if course.instructor_id != instructor_id:
+            raise ValueError("You do not have permission to delete this course")
         await self.course_dao.delete_course(course_id)
 
     async def create_lessons(self, course_id: int, instructor_id: int, lesson_data: LessonCreate) -> LessonRead:
