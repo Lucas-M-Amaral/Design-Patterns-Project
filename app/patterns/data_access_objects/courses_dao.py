@@ -11,6 +11,8 @@ from app.schemas.course_schemas import (
     CourseUpdate,
     LessonCreate,
     LessonRead,
+    LessonReadPartial,
+    CourseReadPartial,
 )
 from app.db.database import get_async_session
 
@@ -20,7 +22,7 @@ class CourseDAO:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_course(self, course_data: CourseCreate[LessonCreate]) -> CourseRead[LessonRead]:
+    async def create_course(self, course_data: CourseCreate) -> CourseRead:
         """Create a new course with the provided data."""
         stmt = (select(Course)
             .where(Course.title == course_data.title)
@@ -31,26 +33,23 @@ class CourseDAO:
         if existing_course:
             raise ValueError("Course with the same title and instructor already exists")
 
-        course_dict = course_data.model_dump(exclude={"lessons"})
-        lessons = [Lesson(**item.model_dump()) for item in course_data.lessons]
-
+        course_dict = course_data.model_dump()
         course = Course(**course_dict)
-        course.lessons = lessons
         self.session.add(course)
         await self.session.commit()
         await self.session.refresh(course)
-        return CourseRead[LessonRead].model_validate(course)
+        return CourseRead.model_validate(course)
 
-    async def get_course_by_id(self, course_id: int) -> CourseRead[LessonRead] | None:
+    async def get_course_by_id(self, course_id: int) -> CourseRead[LessonReadPartial] | None:
         """Get a course by its ID."""
         stmt = select(Course).where(Course.id == course_id).options(selectinload(Course.lessons))
         result = await self.session.execute(stmt)
         course = result.scalars().first()
         if not course:
             return None
-        return CourseRead[LessonRead].model_validate(course)
+        return CourseRead[LessonReadPartial].model_validate(course)
 
-    async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseRead[LessonRead]]:
+    async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseReadPartial]:
         """Get a paginated list of all business_objects."""
         stmt = (
             select(Course)
@@ -60,7 +59,7 @@ class CourseDAO:
         )
         result = await self.session.execute(stmt)
         courses = result.scalars().all()
-        return [CourseRead[LessonRead].model_validate(course) for course in courses]
+        return [CourseReadPartial.model_validate(course) for course in courses]
 
     async def get_course_model_by_id(self, course_id: int) -> Course:
         from sqlalchemy.orm import selectinload
@@ -82,7 +81,7 @@ class CourseDAO:
             self,
             course_id: int,
             course_data: CourseUpdate
-    ) -> CourseRead:
+    ) -> CourseReadPartial:
         """Update a course with the provided data."""
         course = await self.session.get(Course, course_id)
         if not course:
@@ -93,7 +92,7 @@ class CourseDAO:
 
         await self.session.commit()
         await self.session.refresh(course)
-        return CourseRead[LessonRead].model_validate(course)
+        return CourseReadPartial.model_validate(course)
 
     async def delete_course(self, course_id: int) -> None:
         """Delete a course by its ID."""
@@ -113,25 +112,50 @@ class LessonDAO:
         """Create a new lesson with the provided data."""
         lesson = Lesson(**lesson_data.model_dump())
         lesson.course_id = course_id
+
+        if lesson_data.prerequisite_id is not None:
+            pre_requisite = await self.session.get(Lesson, lesson_data.prerequisite_id)
+            if not pre_requisite:
+                raise ValueError("Prerequisite lesson not found")
+            if pre_requisite.course_id != course_id:
+                raise ValueError("Prerequisite lesson must belong to the same course")
+
+        if lesson_data.parent_id is not None:
+            parent = await self.session.get(Lesson, lesson_data.parent_id)
+            if not parent:
+                raise ValueError("Module lesson not found")
+            if not parent.is_module:
+                raise ValueError("Parent lesson must be a module")
+
+        if lesson_data.prerequisite_id == lesson_data.parent_id:
+            raise ValueError("Prerequisite lesson cannot be the same as the module lesson")
+
         self.session.add(lesson)
         await self.session.commit()
         await self.session.refresh(lesson)
         return LessonRead.model_validate(lesson)
 
-    async def get_lesson_by_id(self, lesson_id: int) -> LessonRead | None:
+    async def get_lesson_by_id(self, course_id: int, lesson_id: int) -> LessonRead[LessonReadPartial] | None:
         """Get a lesson by its ID."""
-        stmt = select(Lesson).where(Lesson.id == lesson_id)
+        stmt = (select(Lesson)
+                .where(Lesson.course_id == course_id)
+                .where(Lesson.id == lesson_id)
+                .options(selectinload(Lesson.children))
+        )
         result = await self.session.execute(stmt)
         lesson = result.scalars().first()
         if not lesson:
-            return None
+            raise ValueError("Lesson not found for this course")
         return LessonRead.model_validate(lesson)
 
-    async def delete_lesson(self, lesson_id: int) -> None:
+    async def delete_lesson(self, course_id: id, lesson_id: int) -> None:
         """Delete a lesson by its ID."""
-        lesson = await self.session.get(Lesson, lesson_id)
+        stmt = (select(Lesson)
+                .where(Lesson.course_id == course_id)
+                .where(Lesson.id == lesson_id))
+        lesson = (await self.session.execute(stmt)).scalars().first()
         if not lesson:
-            raise ValueError("Lesson not found")
+            raise ValueError("Lesson not found for this course")
         await self.session.delete(lesson)
         await self.session.commit()
 

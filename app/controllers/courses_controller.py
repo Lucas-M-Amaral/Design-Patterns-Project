@@ -6,18 +6,20 @@ from app.schemas.response_schemas import PaginatedResponse
 from app.schemas.course_schemas import (
     CourseCreate,
     CourseRead,
+    CourseReadPartial,
     CourseUpdate,
     LessonCreate,
-    LessonRead
+    LessonRead,
+    LessonReadPartial
 )
 
 courses_router = APIRouter(prefix="/courses", tags=["courses"])
 """APIRouter: Router for course-related endpoints."""
 
 
-@courses_router.post("/", response_model=CourseRead[LessonRead])
+@courses_router.post("/", response_model=CourseRead)
 async def create_course(
-    course_data: CourseCreate[LessonCreate],
+    course_data: CourseCreate,
     bo: CourseBO = Depends(CourseBO.from_depends),
     current_user: User = Depends(fastapi_users.current_user()),
 ):
@@ -38,7 +40,7 @@ async def create_course(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@courses_router.get("/", response_model=PaginatedResponse[CourseRead[LessonRead]])
+@courses_router.get("/", response_model=PaginatedResponse[CourseReadPartial])
 async def get_all_courses(
     bo: CourseBO = Depends(CourseBO.from_depends),
     current_user: User = Depends(fastapi_users.current_user()), # noqa
@@ -46,9 +48,13 @@ async def get_all_courses(
     per_page: int = Query(10, le=100),
 ):
     """Get a paginated list of all business_objects."""
+    offset = (page - 1) * per_page
     try:
-        items = await bo.get_all_courses()
-        return PaginatedResponse[CourseRead[LessonRead]](
+        items = await bo.get_all_courses(
+            offset=offset,
+            limit=per_page
+        )
+        return PaginatedResponse[CourseRead](
             page=page,
             per_page=per_page,
             total=len(items),
@@ -58,7 +64,7 @@ async def get_all_courses(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@courses_router.get("/{course_id}", response_model=CourseRead[LessonRead])
+@courses_router.get("/{course_id}", response_model=CourseRead[LessonReadPartial])
 async def get_course_by_id(
     course_id: int,
     bo: CourseBO = Depends(CourseBO.from_depends),
@@ -66,14 +72,14 @@ async def get_course_by_id(
 ):
     """Get the structure of a course by its ID."""
     try:
-        return await bo.get_course_by_id(course_id)
+        return await bo.get_course_by_id(course_id=course_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@courses_router.patch("/{course_id}", response_model=CourseUpdate)
+@courses_router.patch("/{course_id}", response_model=CourseReadPartial)
 async def update_course(
     course_id: int,
     course_data: CourseUpdate,
@@ -87,7 +93,11 @@ async def update_course(
             detail="You do not have permission to update this course."
         )
     try:
-        return await bo.update_course(course_id, current_user.id, course_data)
+        return await bo.update_course(
+            course_id=course_id,
+            instructor_id=current_user.id,
+            course_data=course_data
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -107,14 +117,14 @@ async def delete_course(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to delete this course."
             )
-        await bo.delete_course(course_id, current_user.id)
+        await bo.delete_course(course_id=course_id, instructor_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@courses_router.post("/{course_id}/lessons", response_model=LessonRead)
+@courses_router.post("/{course_id}/lessons", response_model=LessonRead[LessonReadPartial])
 async def create_lesson(
     course_id: int,
     lesson_data: LessonCreate,
@@ -128,9 +138,32 @@ async def create_lesson(
             detail="You do not have permission to add lessons to this course."
         )
     try:
-        return await bo.create_lessons(course_id, current_user.id, lesson_data)
+        return await bo.create_lessons(
+            course_id=course_id,
+            instructor_id=current_user.id,
+            lesson_data=lesson_data
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@courses_router.get("/{course_id}/lessons/{lesson_id}", response_model=LessonRead)
+async def get_lesson_by_id(
+    course_id: int,
+    lesson_id: int,
+    bo: CourseBO = Depends(CourseBO.from_depends),
+    current_user: User = Depends(fastapi_users.current_user()), # noqa
+):
+    """Get a lesson by its ID."""
+    try:
+        return await bo.get_lesson_by_id(
+            course_id=course_id,
+            lesson_id=lesson_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -149,7 +182,11 @@ async def delete_lesson(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to delete lessons from this course."
             )
-        await bo.delete_lessons(course_id, current_user.id, lesson_id)
+        await bo.delete_lessons(
+            course_id=course_id,
+            instructor_id=current_user.id,
+            lesson_id=lesson_id
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:

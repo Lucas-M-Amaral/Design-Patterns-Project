@@ -13,6 +13,8 @@ from app.schemas.course_schemas import (
     CourseUpdate,
     LessonCreate,
     LessonRead,
+    LessonReadPartial,
+    CourseReadPartial,
 )
 
 
@@ -34,22 +36,22 @@ class CourseBO:
 
     async def create_course(
         self,
-        course_data: CourseCreate[LessonCreate],
+        course_data: CourseCreate,
         instructor_id: int,
-    ) -> CourseRead[LessonRead]:
+    ) -> CourseRead:
         """Create a new course with the provided data."""
         if course_data.price < 0:
             raise ValueError("Course price cannot be negative")
         course_data.instructor_id = instructor_id
         return await self.course_dao.create_course(course_data)
 
-    async def get_course_by_id(self, course_id: int) -> Optional[CourseRead[LessonRead]]:
+    async def get_course_by_id(self, course_id: int) -> Optional[CourseRead[LessonReadPartial]]:
         """Get the structure of a course by its ID."""
         curse_model = await self.course_dao.get_course_model_by_id(course_id)
         print(curse_model.render())
         return await self.course_dao.get_course_by_id(course_id)
 
-    async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseRead[LessonRead]]:
+    async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseReadPartial]:
         """Get a paginated list of all business_objects."""
         return await self.course_dao.get_all_courses(offset, limit)
 
@@ -58,7 +60,7 @@ class CourseBO:
             course_id: int,
             instructor_id: int,
             course_data: CourseUpdate
-    ) -> CourseRead[LessonRead]:
+    ) -> CourseReadPartial:
         """Update a course with the given data."""
         if course_data.price is not None and course_data.price < 0:
             raise ValueError("Course price cannot be negative")
@@ -89,6 +91,10 @@ class CourseBO:
         content_item = await self.lesson_dao.create_lesson(course_id, lesson_data)
         return content_item
 
+    async def get_lesson_by_id(self, course_id: int, lesson_id: int) -> Optional[LessonRead[LessonReadPartial]]:
+        """Get a lesson by its ID."""
+        return await self.lesson_dao.get_lesson_by_id(course_id, lesson_id)
+
     async def delete_lessons(self, course_id: int, instructor_id: int, lesson_id: int):
         """Delete a lesson from a course."""
         course = await self.course_dao.get_course_by_id(course_id)
@@ -96,11 +102,4 @@ class CourseBO:
             raise ValueError("Course not found")
         if course.instructor_id != instructor_id:
             raise ValueError("You do not have permission to delete lessons from this course")
-        lesson = await self.lesson_dao.get_lesson_by_id(lesson_id)
-        if not lesson:
-            raise ValueError("Lesson not found")
-
-        if lesson.course_id != course_id:
-            raise ValueError("This lesson does not belong to the specified course")
-
-        await self.lesson_dao.delete_lesson(lesson_id)
+        await self.lesson_dao.delete_lesson(course_id, lesson_id)

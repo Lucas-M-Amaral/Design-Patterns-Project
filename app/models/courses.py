@@ -86,6 +86,7 @@ class Lesson(Base):
         "Lesson",
         back_populates="parent",
         foreign_keys=[parent_id],
+        cascade="all, delete-orphan",
         order_by="Lesson.order",
         lazy="selectin"
     )
@@ -102,6 +103,26 @@ class Lesson(Base):
         back_populates="lessons",
         lazy="selectin"
     )
+
+    @property
+    def is_module(self) -> bool:
+        """Check if the lesson is a module."""
+        return self.lesson_type == LessonTypeEnum.MODULE
+
+    @property
+    def is_quiz(self) -> bool:
+        """Check if the lesson is a quiz."""
+        return self.lesson_type == LessonTypeEnum.QUIZ
+
+    @property
+    def is_video(self) -> bool:
+        """Check if the lesson is a video."""
+        return self.lesson_type == LessonTypeEnum.VIDEO
+
+    @property
+    def is_text(self) -> bool:
+        """Check if the lesson is text content."""
+        return self.lesson_type == LessonTypeEnum.TEXT
 
     def to_composite(self) -> LessonComponent:
         """Convert the lesson to a composite component."""

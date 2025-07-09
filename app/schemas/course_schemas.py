@@ -1,5 +1,5 @@
 from typing import Generic, TypeVar, List
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 from app.models.courses import LessonTypeEnum
 
 T = TypeVar('T')
@@ -29,7 +29,18 @@ class LessonUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class LessonRead(BaseModel):
+class LessonReadPartial(BaseModel):
+    """Schema for reading a lesson not achieved yet."""
+    id: int = Field(..., description="Unique identifier for the lesson")
+    title: str = Field(..., description="Title of the lesson")
+    lesson_type: LessonTypeEnum = Field(..., description="Type of the lesson")
+    order: int = Field(..., description="Position in course sequence")
+    course_id: int = Field(..., description="ID of the parent course")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LessonRead(BaseModel, Generic[T]):
     """Schema for reading a lesson."""
     id: int = Field(..., description="Unique identifier for the lesson")
     title: str = Field(..., description="Title of the lesson")
@@ -41,18 +52,21 @@ class LessonRead(BaseModel):
     course_id: int = Field(..., description="ID of the parent course")
     parent_id: int | None = Field(None, description="ID of parent module")
     prerequisite_id: int | None = Field(None, description="ID of prerequisite lesson")
+    children: List[LessonReadPartial] = Field(default_factory=list, description="List of sub-lessons or modules")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        arbitrary_types_allowed=True,
+    )
 
 
-class CourseCreate(BaseModel, Generic[T]):
+class CourseCreate(BaseModel):
     """Schema for creating a course."""
     title: str = Field(..., max_length=255, description="Title of the course")
     description: str | None = Field(None, max_length=2000, description="Detailed course description")
     price: float = Field(..., ge=0, description="Price of the course in USD")
     is_active: bool = Field(True, description="Whether the course is available for enrollment")
     instructor_id: int | None = Field(None, description="Instructor ID (optional as it's set by authenticated user)")
-    lessons: List[T] = Field(default_factory=list, description="List of lessons included in this course")
 
 
 class CourseUpdate(BaseModel):
@@ -61,6 +75,17 @@ class CourseUpdate(BaseModel):
     description: str | None = Field(None, max_length=2000, description="Updated course description")
     price: float | None = Field(None, ge=0, description="Updated course price")
     is_active: bool | None = Field(None, description="Set course availability status")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CourseReadPartial(BaseModel):
+    """Schema for reading a course not achieved yet."""
+    id: int = Field(..., description="Unique course identifier")
+    title: str = Field(..., description="Course title")
+    price: float = Field(..., description="Course price")
+    is_active: bool = Field(..., description="Course availability status")
+    instructor_id: int = Field(..., description="ID of the instructor")
 
     model_config = ConfigDict(from_attributes=True)
 
