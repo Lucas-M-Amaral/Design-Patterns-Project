@@ -191,3 +191,32 @@ async def delete_lesson(
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@courses_router.post("/{course_id}/lessons/{lesson_id}/clone", response_model=LessonRead[LessonReadPartial])
+async def clone_lesson(
+    course_id: int,
+    lesson_id: int,
+    new_course_id: int,
+    new_prerequisite_id: int | None = None,
+    bo: CourseBO = Depends(CourseBO.from_depends),
+    current_user: User = Depends(fastapi_users.current_user()),
+):
+    """Clone a lesson within a course."""
+    if not current_user.is_instructor:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to clone lessons in this course."
+        )
+    try:
+        return await bo.clone_lesson(
+            course_id=course_id,
+            lesson_id=lesson_id,
+            new_course_id=new_course_id,
+            new_prerequisite_id=new_prerequisite_id,
+            instructor_id=current_user.id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
