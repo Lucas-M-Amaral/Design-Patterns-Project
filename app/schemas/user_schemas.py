@@ -19,7 +19,7 @@ class UserCreate(schemas.BaseUserCreate):
         examples=[UserTypeEnum.STUDENT, UserTypeEnum.INSTRUCTOR],
         description="The type of user: S for Student, I for Instructor"
     )
-    is_verified: bool = Field(False, description="Whether the user's email has been verified")
+    is_verified: bool = Field(True, description="Whether the user's email has been verified")
     is_active: bool = Field(True, description="Whether the user account is active")
     is_superuser: bool = Field(False, description="Whether the user has superuser privileges")
 

@@ -4,12 +4,12 @@ from fastapi import Depends
 from fastapi_users import BaseUserManager, FastAPIUsers
 from fastapi_users.db import SQLAlchemyBaseUserTable
 
-from sqlalchemy import String, Enum as SQLEnum
+from sqlalchemy import String, ForeignKey, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_async_session, UserDatabase
-from app.models.courses import Course
+from app.models.courses import Course, Lesson
 from app.utils.token import auth_backend
 from app.utils.models import Base
 

@@ -125,3 +125,23 @@ class Lesson(Base):
                 content_type=self.lesson_type.value,
                 content_path=self.file_path
             )
+
+
+class LessonProgress(Base):
+    """Model to track student progression in lessons."""
+    __tablename__ = "lesson_progress"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"), nullable=False)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    user: Mapped["Course"] = relationship(
+        "User",
+        back_populates="lesson_progressions",
+        cascade="all, delete-orphan",
+    )
+    lesson: Mapped["Lesson"] = relationship(
+        "Lesson",
+        back_populates="progressions",
+        cascade="all, delete-orphan",
+    )
