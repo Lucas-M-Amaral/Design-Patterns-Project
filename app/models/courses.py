@@ -12,7 +12,7 @@ from sqlalchemy import (
 )
 
 from app.utils.models import Base
-from app.patterns.composite import LessonComponent, LessonLeaf, CourseComposite
+from app.patterns.composite import LessonComponent, LessonLeaf, ModuleComposite
 
 
 class LessonTypeEnum(str, Enum):
@@ -47,12 +47,12 @@ class Course(Base):
         lazy="selectin"
     )
 
-    def render(self):
-        """Render the course and its lessons using the Composite Pattern."""
-        composite = CourseComposite(self.title)
+    def display_content(self):
+        """Display the course content in a structured format."""
+        render_content = [f"Course: {self.title}"]
         for lesson in self.lessons:
-            composite.lessons.append(lesson.to_composite())
-        return composite.render()
+            render_content.append(lesson.to_composite().render())
+        return "\n".join(render_content)
 
 
 class Lesson(Base):
@@ -109,25 +109,13 @@ class Lesson(Base):
         """Check if the lesson is a module."""
         return self.lesson_type == LessonTypeEnum.MODULE
 
-    @property
-    def is_quiz(self) -> bool:
-        """Check if the lesson is a quiz."""
-        return self.lesson_type == LessonTypeEnum.QUIZ
-
-    @property
-    def is_video(self) -> bool:
-        """Check if the lesson is a video."""
-        return self.lesson_type == LessonTypeEnum.VIDEO
-
-    @property
-    def is_text(self) -> bool:
-        """Check if the lesson is text content."""
-        return self.lesson_type == LessonTypeEnum.TEXT
-
     def to_composite(self) -> LessonComponent:
         """Convert the lesson to a composite component."""
         if self.children:
-            composite = CourseComposite(self.title)
+            composite = ModuleComposite(
+                title=self.title,
+                lesson_type=self.lesson_type.value
+            )
             for child in self.children:
                 composite.lessons.append(child.to_composite())
             return composite

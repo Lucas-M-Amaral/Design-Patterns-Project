@@ -24,16 +24,17 @@ class LessonLeaf(LessonComponent):
         return f"Lesson Leaf: {self.title}, Type: {self.content_type}, Path: {self.content_path or 'N/A'}"
 
 
-class CourseComposite(LessonComponent):
-    """Represents a course that can contain multiple content items or other courses."""
+class ModuleComposite(LessonComponent):
+    """Represents a module composite that can contain other lessons or modules."""
 
-    def __init__(self, title: str):
+    def __init__(self, title: str, lesson_type: str):
         self.title = title
+        self.lesson_type = lesson_type
         self.lessons: list[LessonComponent] = []
 
     def render(self) -> str:
         """Render the course and its content items."""
-        rendered_content = [f"Course Composite: {self.title}"]
+        rendered_content = [f"Module Composite: {self.title}, Type: {self.lesson_type}"]
         for item in self.lessons:
             rendered_content.append(item.render())
         return "\n".join(rendered_content)

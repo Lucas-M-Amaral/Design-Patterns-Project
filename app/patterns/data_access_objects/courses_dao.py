@@ -14,20 +14,22 @@ from app.schemas.course_schemas import (
     LessonReadPartial,
     CourseReadPartial,
 )
+from app.patterns.prototype import LessonPrototype
 from app.db.database import get_async_session
 
 
 class CourseDAO:
     """Data Access Object for Course operations."""
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def create_course(self, course_data: CourseCreate) -> CourseRead:
         """Create a new course with the provided data."""
         stmt = (select(Course)
-            .where(Course.title == course_data.title)
-            .where(Course.instructor_id == course_data.instructor_id)
-        )
+                .where(Course.title == course_data.title)
+                .where(Course.instructor_id == course_data.instructor_id)
+                )
         result = await self.session.execute(stmt)
         existing_course = result.scalars().first()
         if existing_course:
@@ -77,11 +79,7 @@ class CourseDAO:
             raise ValueError("Course not found")
         return course
 
-    async def update_course(
-            self,
-            course_id: int,
-            course_data: CourseUpdate
-    ) -> CourseReadPartial:
+    async def update_course(self, course_id: int, course_data: CourseUpdate) -> CourseReadPartial:
         """Update a course with the provided data."""
         course = await self.session.get(Course, course_id)
         if not course:
@@ -105,30 +103,35 @@ class CourseDAO:
 
 class LessonDAO:
     """Data Access Object for Lesson operations."""
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
     async def create_lesson(self, course_id: int, lesson_data: LessonCreate) -> LessonRead:
         """Create a new lesson with the provided data."""
         lesson = Lesson(**lesson_data.model_dump())
-        lesson.course_id = course_id
 
-        if lesson_data.prerequisite_id is not None:
+        lesson.course_id = course_id
+        pre_requisite_id = lesson_data.prerequisite_id
+        parent_id = lesson_data.parent_id
+
+        if pre_requisite_id is not None:
             pre_requisite = await self.session.get(Lesson, lesson_data.prerequisite_id)
             if not pre_requisite:
                 raise ValueError("Prerequisite lesson not found")
             if pre_requisite.course_id != course_id:
                 raise ValueError("Prerequisite lesson must belong to the same course")
 
-        if lesson_data.parent_id is not None:
+        if parent_id is not None:
             parent = await self.session.get(Lesson, lesson_data.parent_id)
             if not parent:
                 raise ValueError("Module lesson not found")
             if not parent.is_module:
                 raise ValueError("Parent lesson must be a module")
 
-        if lesson_data.prerequisite_id == lesson_data.parent_id:
-            raise ValueError("Prerequisite lesson cannot be the same as the module lesson")
+        if pre_requisite_id is not None and parent_id is not None:
+            if pre_requisite_id == parent_id:
+                raise ValueError("Prerequisite and parent cannot be the same lesson")
 
         self.session.add(lesson)
         await self.session.commit()
@@ -141,7 +144,7 @@ class LessonDAO:
                 .where(Lesson.course_id == course_id)
                 .where(Lesson.id == lesson_id)
                 .options(selectinload(Lesson.children))
-        )
+                )
         result = await self.session.execute(stmt)
         lesson = result.scalars().first()
         if not lesson:
@@ -158,6 +161,45 @@ class LessonDAO:
             raise ValueError("Lesson not found for this course")
         await self.session.delete(lesson)
         await self.session.commit()
+
+    async def clone_lesson(
+            self,
+            course_id: int,
+            new_course_id: int,
+            lesson_id: int,
+            new_prerequisite_id: int | None = None
+    ) -> LessonRead:
+        """Clone a lesson to a new course."""
+        stmt = (
+            select(Lesson)
+            .where(Lesson.id == lesson_id, Lesson.course_id == course_id)
+            .options(selectinload(Lesson.children))
+        )
+
+        result = await self.session.execute(stmt)
+        lesson: Lesson = result.scalar_one_or_none()
+
+        if not lesson:
+            raise ValueError("Lesson not found")
+
+        if not lesson.is_module:
+            raise ValueError("Only modules can be cloned")
+
+        lesson_clone = LessonPrototype(
+            lesson=lesson,
+            new_course_id=new_course_id,
+            new_prerequisite_id=new_prerequisite_id
+        ).clone()
+
+        self.session.add(lesson_clone)
+        await self.session.flush()
+
+        for child in lesson_clone.children:
+            child.parent_id = lesson_clone.id
+        
+        await self.session.commit()
+        await self.session.refresh(lesson_clone)
+        return LessonRead.model_validate(lesson_clone)
 
 
 async def get_course_dao(session: AsyncSession = Depends(get_async_session)):
