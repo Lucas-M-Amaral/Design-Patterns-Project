@@ -66,7 +66,6 @@ class CourseCreate(BaseModel):
     description: str | None = Field(None, max_length=2000, description="Detailed course description")
     price: float = Field(..., ge=0, description="Price of the course in USD")
     is_active: bool = Field(True, description="Whether the course is available for enrollment")
-    instructor_id: int | None = Field(None, description="Instructor ID (optional as it's set by authenticated user)")
 
 
 class CourseUpdate(BaseModel):

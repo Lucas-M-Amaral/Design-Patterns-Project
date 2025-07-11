@@ -14,7 +14,7 @@ from app.schemas.course_schemas import (
 )
 
 courses_router = APIRouter(prefix="/courses", tags=["courses"])
-"""APIRouter: Router for course-related endpoints."""
+"""APIRouter: Router for course-related endpoints."""   
 
 
 @courses_router.post("/", response_model=CourseRead)

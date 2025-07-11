@@ -42,13 +42,16 @@ class CourseBO:
         """Create a new course with the provided data."""
         if course_data.price < 0:
             raise ValueError("Course price cannot be negative")
-        course_data.instructor_id = instructor_id
-        return await self.course_dao.create_course(course_data=course_data)
+
+        course_data_dict = course_data.model_dump()
+        course_data_dict.update({"instructor_id": instructor_id})
+
+        return await self.course_dao.create_course(course_data=course_data_dict)
 
     async def get_course_by_id(self, course_id: int) -> Optional[CourseRead[LessonReadPartial]]:
         """Get the structure of a course by its ID."""
-        curse_model = await self.course_dao.get_course_model_by_id(course_id=course_id)
-        print(curse_model.display_content())
+        course_model = await self.course_dao.get_course_model_by_id(course_id=course_id)
+        print(course_model.display_content())
         return await self.course_dao.get_course_by_id(course_id=course_id)
 
     async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseReadPartial]:
@@ -64,11 +67,14 @@ class CourseBO:
         """Update a course with the given data."""
         if course_data.price is not None and course_data.price < 0:
             raise ValueError("Course price cannot be negative")
+
         course = await self.course_dao.get_course_by_id(course_id=course_id)
         if not course:
             raise ValueError("Course not found")
+
         if course.instructor_id != instructor_id:
             raise ValueError("You do not have permission to update this course")
+
         return await self.course_dao.update_course(
             course_id=course_id,
             course_data=course_data
