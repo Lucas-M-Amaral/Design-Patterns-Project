@@ -9,11 +9,8 @@ T = TypeVar('T')
 
 class PaymentCreate(BaseModel):
     """Schema for creating a payment."""
-    # user_id: int | None = Field(None, description="ID of the user making the payment")
-    # course_id: int | None = Field(None, description="ID of the course being paid for")
     payment_type: PaymentTypeEnum = Field(..., description="Type of payment method used")
     amount: float = Field(..., ge=0, description="Total amount to be paid")
-    # installments: int | None = Field(1, ge=1, description="Number of installments for the payment")
 
 
 class PaymentRead(BaseModel, Generic[T]):
