@@ -39,13 +39,14 @@ class Course(Base):
     )
 
     instructor = relationship("User", back_populates="courses_teaching")
-    lessons: Mapped[List["Lesson"]] = relationship(
+    lessons = relationship(
         "Lesson",
         back_populates="course",
         cascade="all, delete-orphan",
         order_by="Lesson.order",
         lazy="selectin"
     )
+    payments = relationship("Payment", back_populates="course")
 
     def display_content(self):
         """Display the course content in a structured format."""
@@ -98,9 +99,15 @@ class Lesson(Base):
         remote_side="[Lesson.id]",
         lazy="selectin"
     )
-    course: Mapped["Course"] = relationship(
+    course = relationship(
         "Course",
         back_populates="lessons",
+        lazy="selectin"
+    )
+    progressions = relationship(
+        "LessonProgression",
+        back_populates="lesson",
+        cascade="all, delete-orphan",
         lazy="selectin"
     )
 
@@ -125,3 +132,23 @@ class Lesson(Base):
                 content_type=self.lesson_type.value,
                 content_path=self.file_path
             )
+
+
+class LessonProgression(Base):
+    """Model to track student progression in lessons."""
+    __tablename__ = "lesson_progressions"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"), nullable=False)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    user = relationship(
+        "User",
+        back_populates="lesson_progressions",
+        lazy="selectin"
+    )
+    lesson = relationship(
+        "Lesson",
+        back_populates="progressions",
+        lazy="selectin"
+    )

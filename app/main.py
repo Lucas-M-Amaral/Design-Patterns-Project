@@ -6,6 +6,7 @@ from app.db.database import create_db_and_tables
 from app.models.users import user_routers
 from app.controllers.users_controller import users_router
 from app.controllers.courses_controller import courses_router
+from app.controllers.payments_controller import payments_router
 from app.schemas.user_schemas import UserCreate, UserRead, UserUpdate
 
 @asynccontextmanager
@@ -58,3 +59,4 @@ app.include_router(
 
 app.include_router(router=users_router)
 app.include_router(router=courses_router)
+app.include_router(router=payments_router)

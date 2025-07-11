@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.courses import Course, Lesson
 from app.schemas.course_schemas import (
-    CourseCreate,
     CourseRead,
     CourseUpdate,
     LessonCreate,
@@ -24,19 +23,18 @@ class CourseDAO:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_course(self, course_data: CourseCreate) -> CourseRead:
+    async def create_course(self, course_data: Dict[str, Any]) -> CourseRead:
         """Create a new course with the provided data."""
         stmt = (select(Course)
-                .where(Course.title == course_data.title)
-                .where(Course.instructor_id == course_data.instructor_id)
+                .where(Course.title == course_data["title"])
+                .where(Course.instructor_id == course_data["instructor_id"])
                 )
         result = await self.session.execute(stmt)
         existing_course = result.scalars().first()
         if existing_course:
             raise ValueError("Course with the same title and instructor already exists")
 
-        course_dict = course_data.model_dump()
-        course = Course(**course_dict)
+        course = Course(**course_data)
         self.session.add(course)
         await self.session.commit()
         await self.session.refresh(course)
@@ -150,6 +148,19 @@ class LessonDAO:
         if not lesson:
             raise ValueError("Lesson not found for this course")
         return LessonRead.model_validate(lesson)
+
+    async def get_lesson_model_by_id(self, course_id: int, lesson_id: int) -> Lesson:
+        """Get a lesson model by its ID."""
+        stmt = (select(Lesson)
+                .where(Lesson.course_id == course_id)
+                .where(Lesson.id == lesson_id)
+                .options(selectinload(Lesson.children))
+                )
+        result = await self.session.execute(stmt)
+        lesson = result.scalars().first()
+        if not lesson:
+            raise ValueError("Lesson not found for this course")
+        return lesson
 
     async def delete_lesson(self, course_id: id, lesson_id: int) -> None:
         """Delete a lesson by its ID."""

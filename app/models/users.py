@@ -9,7 +9,6 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_async_session, UserDatabase
-from app.models.courses import Course
 from app.utils.token import auth_backend
 from app.utils.models import Base
 
@@ -37,9 +36,21 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     )
 
     # Relationships
-    courses_teaching: Mapped [list[Course]] = relationship(
+    courses_teaching = relationship(
         "Course",
         back_populates="instructor",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    payments = relationship(
+        "Payment",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    lesson_progressions = relationship(
+        "LessonProgression",
+        back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
@@ -79,10 +90,27 @@ class UserManager(BaseUserManager[User, int]):
         except ValueError as e:
             raise ValueError("Invalid ID format") from e
 
-    async def get_all(self, offset: int = 0, limit: int = 100, user_type: str | None = None) -> list[User]:
+    async def get_all(self, offset: int = 0, limit: int = 100, user_type: str | None = None):
         """Get all users with optional filters."""
         return await self.user_db.get_all(offset=offset, limit=limit, user_type=user_type) # noqa
 
+    async def get_my_courses(self, user_id: int, offset: int = 0, limit: int = 100):
+        """Get all courses for a user with pagination."""
+        return await self.user_db.get_my_courses(user_id=user_id, offset=offset, limit=limit) # noqa
+
+    async def get_my_lesson_progressions(
+            self, user_id: int, course_id: int | None = None, offset: int = 0, limit: int = 100
+    ):
+        """Get all lesson progressions for a user with optional course filtering."""
+        return await self.user_db.get_lesson_progressions(  # noqa
+            user_id=user_id, course_id=course_id, offset=offset, limit=limit
+        )
+
+    async def mark_lesson_completed(self, user_id: int, lesson_id: int):
+        """Mark a lesson as completed for the user."""
+        lesson_progression = await self.user_db.get_lesson_progress(user_id=user_id, lesson_id=lesson_id) # noqa
+        lesson_progression.completed = True
+        await self.user_db.mark_lesson_completed(lesson_progression=lesson_progression) # noqa
 
 async def get_user_manager(user_db: UserDatabase = Depends(get_user_db)):
     """Dependency to get the user manager."""
