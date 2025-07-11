@@ -1,11 +1,13 @@
 from typing import List, Dict, Any
+
 from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.payments import Payment
-from app.schemas.payment_schemas import PaymentCreate, PaymentRead
+from app.models.courses import LessonProgression
+from app.schemas.payment_schemas import PaymentRead
 from app.schemas.course_schemas import CourseReadPartial
 from app.db.database import get_async_session
 
@@ -22,6 +24,19 @@ class PaymentDAO:
         self.session.add(payment)
         await self.session.commit()
         await self.session.refresh(payment)
+
+        course_lessons = payment.course.lessons
+        if course_lessons:
+            # Initialize lesson progression for the user
+            for lesson in course_lessons:
+                progression = LessonProgression(
+                    user_id=payment.user_id,
+                    lesson_id=lesson.id,
+                    completed=False
+                )
+                self.session.add(progression)
+
+            await self.session.commit()
         return PaymentRead.model_validate(payment)
 
     async def get_payment_by_id(self, payment_id: int, user_id: int) -> PaymentRead[CourseReadPartial] | None:

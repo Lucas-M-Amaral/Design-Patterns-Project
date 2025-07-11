@@ -1,5 +1,5 @@
 from typing import Generic, TypeVar, List
-from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 from app.models.courses import LessonTypeEnum
 
 T = TypeVar('T')
@@ -109,5 +109,15 @@ class CoursesTeaching(BaseModel):
     price: float = Field(..., description="Course price")
     is_active: bool = Field(..., description="Course status")
     students_enrolled: int = Field(0, description="Number of students enrolled in this course")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CourseProgressionRead(BaseModel):
+    """Schema for reading course progression."""
+    course_id: int = Field(..., description="ID of the course")
+    progress_percentage: float = Field(..., ge=0, le=100, description="Percentage of course completed")
+    last_lesson_id: int | None = Field(None, description="ID of the last completed lesson")
+    last_lesson_title: str | None = Field(None, description="Title of the last completed lesson")
 
     model_config = ConfigDict(from_attributes=True)

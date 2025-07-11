@@ -149,6 +149,19 @@ class LessonDAO:
             raise ValueError("Lesson not found for this course")
         return LessonRead.model_validate(lesson)
 
+    async def get_lesson_model_by_id(self, course_id: int, lesson_id: int) -> Lesson:
+        """Get a lesson model by its ID."""
+        stmt = (select(Lesson)
+                .where(Lesson.course_id == course_id)
+                .where(Lesson.id == lesson_id)
+                .options(selectinload(Lesson.children))
+                )
+        result = await self.session.execute(stmt)
+        lesson = result.scalars().first()
+        if not lesson:
+            raise ValueError("Lesson not found for this course")
+        return lesson
+
     async def delete_lesson(self, course_id: id, lesson_id: int) -> None:
         """Delete a lesson by its ID."""
         stmt = (select(Lesson)

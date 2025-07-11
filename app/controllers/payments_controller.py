@@ -22,7 +22,7 @@ async def create_payment(
     if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to create a payment."
+            detail="You do not have permission to make a payment."
         )
     try:
         return await bo.create_payment(

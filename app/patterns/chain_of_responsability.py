@@ -1,7 +1,7 @@
 from typing import Optional
 from abc import ABC, abstractmethod
 
-from app.models.courses import Lesson, LessonProgress
+from app.models.courses import Lesson, LessonProgression
 
 
 # Chain of Responsibility Pattern for Lesson Progress Handling
@@ -9,7 +9,7 @@ class Handler(ABC):
     """Abstract base class for a handler in the chain of responsibility pattern for lesson progress."""
 
     @abstractmethod
-    def handle(self, user_id: int, user_progress: dict[int, LessonProgress]) -> bool:
+    def handle(self, user_id: int, user_progress: dict[int, LessonProgression]) -> bool:
         """Check if user can access this lesson based on their progress."""
         raise NotImplementedError("Subclasses must implement this method.")
 
@@ -26,7 +26,7 @@ class ConcreteLessonProgressHandler(Handler):
         self._next_handler = handler
         return handler
 
-    def handle(self, user_id: int, user_progress: dict[int, LessonProgress]) -> bool:
+    def handle(self, user_id: int, user_progress: dict[int, LessonProgression]) -> bool:
         """Handle the request to check if the user can access the lesson."""
         if self.can_access_lesson(user_id, user_progress):
             if self._next_handler:
@@ -34,7 +34,7 @@ class ConcreteLessonProgressHandler(Handler):
             return True
         return False
 
-    def can_access_lesson(self, user_id: int, user_progress: dict[int, LessonProgress]) -> bool:
+    def can_access_lesson(self, user_id: int, user_progress: dict[int, LessonProgression]) -> bool:
         """Check if the user can access the lesson based on their progress."""
         prerequisite_id = self.lesson.prerequisite_id
         if not prerequisite_id:

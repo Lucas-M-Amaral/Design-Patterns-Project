@@ -2,6 +2,7 @@ from fastapi import Query, Depends, APIRouter, HTTPException, status
 
 from app.models.users import User, fastapi_users
 from app.patterns.business_objects.courses_bo import CourseBO
+from app.patterns.business_objects.students_bo import StudentBO
 from app.schemas.response_schemas import PaginatedResponse
 from app.schemas.course_schemas import (
     CourseCreate,
@@ -153,12 +154,23 @@ async def create_lesson(
 async def get_lesson_by_id(
     course_id: int,
     lesson_id: int,
-    bo: CourseBO = Depends(CourseBO.from_depends),
+    course_bo: CourseBO = Depends(CourseBO.from_depends),
+    student_bo: StudentBO = Depends(StudentBO.from_depends),
     current_user: User = Depends(fastapi_users.current_user()), # noqa
 ):
     """Get a lesson by its ID."""
+    if current_user.is_student:
+        if not await student_bo.can_access_lesson(
+                lesson_id=lesson_id,
+                student_id=current_user.id,
+                course_id=course_id
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You must complete the prerequisite lesson to access this lesson."
+            )
     try:
-        return await bo.get_lesson_by_id(
+        return await course_bo.get_lesson_by_id(
             course_id=course_id,
             lesson_id=lesson_id
         )
