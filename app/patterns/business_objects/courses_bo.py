@@ -62,7 +62,10 @@ class CourseBO:
     async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseReadPartial]:
         """Get a paginated list of all business_objects."""
         courses =  await self.course_dao.get_all_courses(offset, limit)
-        return [CourseReadPartial.model_validate(course) for course in courses]
+        return [
+            CourseReadPartial.model_validate(course)
+            for course in courses
+        ]
 
     async def update_course(
             self,

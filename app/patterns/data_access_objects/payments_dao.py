@@ -7,8 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.payments import Payment
 from app.models.courses import LessonProgression
-from app.schemas.payment_schemas import PaymentRead
-from app.schemas.course_schemas import CourseReadPartial
 from app.db.database import get_async_session
 
 
@@ -18,7 +16,7 @@ class PaymentDAO:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_payment(self, payment_data: Dict[str, Any]) -> PaymentRead:
+    async def create_payment(self, payment_data: Dict[str, Any]) -> Payment:
         """Create a new payment with the provided data."""
         payment = Payment(**payment_data)
         self.session.add(payment)
@@ -37,9 +35,9 @@ class PaymentDAO:
                 self.session.add(progression)
 
             await self.session.commit()
-        return PaymentRead.model_validate(payment)
+        return payment
 
-    async def get_payment_by_id(self, payment_id: int, user_id: int) -> PaymentRead[CourseReadPartial] | None:
+    async def get_payment_by_id(self, payment_id: int, user_id: int) -> Payment | None:
         """Get a payment by its ID."""
         stmt = (select(Payment)
                 .where(Payment.id == payment_id)
@@ -49,12 +47,12 @@ class PaymentDAO:
         result = await self.session.execute(stmt)
         payment = result.scalars().first()
         if not payment:
-            raise ValueError("Payment not found")
-        return PaymentRead[CourseReadPartial].model_validate(payment)
+            return None
+        return payment
 
     async def get_payment_get_by_course_id(
             self, course_id: int, user_id: int
-    ) -> PaymentRead[CourseReadPartial] | None:
+    ) -> Payment | None:
         """Get a payment by course ID."""
         stmt = (select(Payment)
                 .where(Payment.course_id == course_id)
@@ -64,12 +62,12 @@ class PaymentDAO:
         result = await self.session.execute(stmt)
         payment = result.scalars().first()
         if not payment:
-            raise ValueError("Payment not found for the specified course")
-        return PaymentRead[CourseReadPartial].model_validate(payment)
+            return None
+        return payment
 
     async def get_all_payments(
             self, user_id: int,  offset: int = 0, limit: int = 100
-    ) -> List[PaymentRead[CourseReadPartial]]:
+    ) -> List[Payment]:
         """Get a paginated list of all payments."""
         stmt = (
             select(Payment)
@@ -80,7 +78,7 @@ class PaymentDAO:
         )
         result = await self.session.execute(stmt)
         payments = result.scalars().all()
-        return [PaymentRead[CourseReadPartial].model_validate(payment) for payment in payments]
+        return list[Payment](payments)
 
 
 async def get_payment_dao(session: AsyncSession = Depends(get_async_session)):

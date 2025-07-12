@@ -53,7 +53,7 @@ class StudentBO:
             course_id=course_id
         )
         if not lesson:
-            return False
+            raise ValueError("Lesson not found")
 
         handler = ConcreteLessonProgressHandler(lesson=lesson)
 

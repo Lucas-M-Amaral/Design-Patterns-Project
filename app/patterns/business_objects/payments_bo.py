@@ -21,8 +21,7 @@ class PaymentBO:
         self.course_dao = course_dao
 
     @classmethod
-    async def from_depends(
-            cls,
+    async def from_depends(cls,
             payment_dao: PaymentDAO = Depends(get_payment_dao),
             course_dao: CourseDAO = Depends(get_course_dao)
     ):
@@ -82,21 +81,29 @@ class PaymentBO:
             "installments": strategy["installments"],
         })
 
-        return await self.payment_dao.create_payment(payment_data=payment_data_dict)
+        payment = await self.payment_dao.create_payment(payment_data=payment_data_dict)
+        return PaymentRead[CourseReadPartial].model_validate(payment)
 
     async def get_payment_by_id(self, payment_id: int, user_id: int) -> Optional[PaymentRead[CourseReadPartial]]:
         """Get a payment by its ID."""
-        return await self.payment_dao.get_payment_by_id(
+        payment = await self.payment_dao.get_payment_by_id(
             payment_id=payment_id,
             user_id=user_id
         )
+        if not payment:
+            raise ValueError("Payment not found")
+        return PaymentRead[CourseReadPartial].model_validate(payment)
 
     async def get_all_payments(
             self, user_id: int, offset: int = 0, limit: int = 100
     ) -> List[PaymentRead[CourseReadPartial]]:
         """Get a paginated list of all payments."""
-        return await self.payment_dao.get_all_payments(
+        payments = await self.payment_dao.get_all_payments(
             user_id=user_id,
             offset=offset,
             limit=limit
         )
+        return [
+            PaymentRead[CourseReadPartial].model_validate(payment)
+            for payment in payments
+        ]
