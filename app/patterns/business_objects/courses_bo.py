@@ -46,17 +46,23 @@ class CourseBO:
         course_data_dict = course_data.model_dump()
         course_data_dict.update({"instructor_id": instructor_id})
 
-        return await self.course_dao.create_course(course_data=course_data_dict)
+        course = await self.course_dao.create_course(course_data=course_data_dict)
+        return CourseRead.model_validate(course)
 
     async def get_course_by_id(self, course_id: int) -> Optional[CourseRead[LessonReadPartial]]:
         """Get the structure of a course by its ID."""
-        course_model = await self.course_dao.get_course_model_by_id(course_id=course_id)
-        print(course_model.display_content())
-        return await self.course_dao.get_course_by_id(course_id=course_id)
+        import logging
+
+        course = await self.course_dao.get_course_by_id(course_id=course_id)
+        if not course:
+            raise ValueError("Course not found")
+        logging.info(course.display_content())
+        return CourseRead[LessonReadPartial].model_validate(course)
 
     async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseReadPartial]:
         """Get a paginated list of all business_objects."""
-        return await self.course_dao.get_all_courses(offset, limit)
+        courses =  await self.course_dao.get_all_courses(offset, limit)
+        return [CourseReadPartial.model_validate(course) for course in courses]
 
     async def update_course(
             self,
@@ -75,10 +81,11 @@ class CourseBO:
         if course.instructor_id != instructor_id:
             raise ValueError("You do not have permission to update this course")
 
-        return await self.course_dao.update_course(
-            course_id=course_id,
-            course_data=course_data
+        updated_course =  await self.course_dao.update_course(
+            course=course,
+            course_data=course_data.model_dump()
         )
+        return CourseReadPartial.model_validate(updated_course)
 
     async def delete_course(self, course_id: int, instructor_id: int):
         """Delete a course by its ID."""
@@ -87,7 +94,7 @@ class CourseBO:
             raise ValueError("Course not found")
         if course.instructor_id != instructor_id:
             raise ValueError("You do not have permission to delete this course")
-        await self.course_dao.delete_course(course_id)
+        await self.course_dao.delete_course(course=course)
 
     async def create_lessons(self, course_id: int, instructor_id: int, lesson_data: LessonCreate) -> LessonRead:
         """Add a new content item to a course."""
@@ -97,35 +104,84 @@ class CourseBO:
         if course.instructor_id != instructor_id:
             raise ValueError("You do not have permission to add lessons to this course")
 
-        content_item = await self.lesson_dao.create_lesson(
-            course_id=course_id,
-            lesson_data=lesson_data
+        pre_requisite_id = lesson_data.prerequisite_id
+        parent_id = lesson_data.parent_id
+
+        lesson_data = lesson_data.model_dump()
+        lesson_data.update({"course_id": course_id})
+
+        if pre_requisite_id is not None:
+            pre_requisite = await self.lesson_dao.get_prerequisite_lesson(
+                course_id=course_id,
+                pre_requisite_id=pre_requisite_id,
+            )
+            if not pre_requisite:
+                raise ValueError("Prerequisite lesson not found")
+            if pre_requisite.course_id != course_id:
+                raise ValueError("Prerequisite lesson must belong to the same course")
+
+        if parent_id is not None:
+            parent = await self.lesson_dao.get_parent_lesson(
+                course_id=course_id,
+                parent_id=parent_id,
+            )
+            if not parent:
+                raise ValueError("Module lesson not found")
+            if not parent.is_module:
+                raise ValueError("Parent lesson must be a module")
+
+        if pre_requisite_id is not None and parent_id is not None:
+            if pre_requisite_id == parent_id:
+                raise ValueError("Prerequisite and parent cannot be the same lesson")
+
+        lesson = await self.lesson_dao.create_lesson(
+            lesson_data=lesson_data,
         )
-        return content_item
+        return LessonRead.model_validate(lesson)
 
     async def get_lesson_by_id(self, course_id: int, lesson_id: int) -> Optional[LessonRead[LessonReadPartial]]:
         """Get a lesson by its ID."""
-        return await self.lesson_dao.get_lesson_by_id(
+        lesson =  await self.lesson_dao.get_lesson_by_id(
             course_id=course_id,
             lesson_id=lesson_id
         )
+        if not lesson:
+            raise ValueError("Lesson not found for this course")
+        return LessonRead[LessonReadPartial].model_validate(lesson)
 
     async def delete_lessons(self, course_id: int, instructor_id: int, lesson_id: int):
         """Delete a lesson from a course."""
+        lesson = await self.lesson_dao.get_lesson_by_id(
+            course_id=course_id,
+            lesson_id=lesson_id
+        )
+        if not lesson:
+            raise ValueError("Lesson not found for this course")
+
+        has_dependants = await self.lesson_dao.has_dependants(lesson_id=lesson.id)
+        if has_dependants:
+            raise ValueError("Cannot delete a lesson that has prerequisites")
+
         course = await self.course_dao.get_course_by_id(course_id=course_id)
-        if not course:
-            raise ValueError("Course not found")
         if course.instructor_id != instructor_id:
             raise ValueError("You do not have permission to delete lessons from this course")
-        await self.lesson_dao.delete_lesson(course_id=course_id, lesson_id=lesson_id)
+        await self.lesson_dao.delete_lesson(lesson=lesson)
 
     async def clone_lesson(
         self, course_id: int, lesson_id: int, new_course_id: int, new_prerequisite_id: int,  instructor_id: int
     ) -> LessonRead:
         """Clone a lesson within a course."""
         course = await self.course_dao.get_course_by_id(course_id=course_id)
+        lesson = await self.lesson_dao.get_lesson_by_id(
+            course_id=course_id,
+            lesson_id=lesson_id
+        )
         if not course:
             raise ValueError("Course not found")
+        if not lesson:
+            raise ValueError("Lesson not found for this course")
+        if not lesson.is_module:
+            raise ValueError("Only module lessons can be cloned")
         if course.instructor_id != instructor_id:
             raise ValueError("You do not have permission to clone lessons in this course")
 
@@ -135,4 +191,4 @@ class CourseBO:
             new_course_id=new_course_id,
             new_prerequisite_id=new_prerequisite_id
         )
-        return cloned_lesson
+        return LessonRead.model_validate(cloned_lesson)

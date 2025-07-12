@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
@@ -16,7 +17,7 @@ async def lifespan(app: FastAPI): # noqa
     yield  # This will run when the app starts and stops
 
 
-# FastAPI Configs
+# FastAPI Configuration
 # ------------------------------------------------------------------------------
 app = FastAPI(
     title="Course Platform API",
@@ -25,6 +26,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 """FastAPI: application instance for the Course Platform API."""
+
+# Logging Configuration
+# ------------------------------------------------------------------------------
+file_handler = logging.FileHandler("app.log")
+console_handler = logging.StreamHandler()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s: - %(message)s",
+    handlers=[
+        file_handler,
+        console_handler
+    ],
+)
 
 
 # App routers

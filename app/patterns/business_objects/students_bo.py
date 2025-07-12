@@ -48,7 +48,7 @@ class StudentBO:
         )
         progress_dict = {lp.lesson_id: lp for lp in lesson_progressions}
 
-        lesson = await self.lesson_dao.get_lesson_model_by_id(
+        lesson = await self.lesson_dao.get_lesson_by_id(
             lesson_id=lesson_id,
             course_id=course_id
         )
