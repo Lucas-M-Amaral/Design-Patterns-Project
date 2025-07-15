@@ -27,14 +27,14 @@ class MessageBO:
     async def send_message(self, message_data: MessageCreate, sender_id: int) -> MessageRead:
         """Send a message to the course chat if the user is allowed."""
 
-        # Valida se o curso existe
+        # Validates if the message data is valid
         course = await self.course_dao.get_course_by_id(course_id=message_data.course_id)
         if not course:
             raise ValueError("Course not found")
 
-        # Valida se o usuário faz parte do curso (aluno pagante ou instrutor)
+        # Verifies if the user is a participant in the course (either a paying student or the instructor)
         if course.instructor_id == sender_id:
-            pass  # É o professor
+            pass  # The user is the instructor, so they can send messages
         else:
             my_courses = await self.user_manager.get_my_courses(user_id=sender_id)
             course_ids = [p.course.id for p in my_courses if p.course]
@@ -50,12 +50,12 @@ class MessageBO:
     async def get_messages(self, course_id: int, user_id: int) -> List[MessageRead]:
         """Retrieve all messages from a course, if the user is a participant."""
 
-        # Verifica se o curso existe
+        # Verifies if the course exists
         course = await self.course_dao.get_course_by_id(course_id=course_id)
         if not course:
             raise ValueError("Course not found")
 
-        # Verifica se o usuário é instrutor ou aluno matriculado
+        # Verifies if the user is a participant in the course (either a paying student or the instructor)
         if course.instructor_id == user_id:
             pass
         else:

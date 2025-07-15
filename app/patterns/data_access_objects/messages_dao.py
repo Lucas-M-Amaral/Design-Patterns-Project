@@ -23,9 +23,10 @@ class MessageDAO:
 
     async def get_messages_by_course(self, course_id: int) -> List[Message]:
         """Get all messages in a course."""
-        stmt = select(Message).where(Message.course_id == course_id).order_by(Message.timestamp)
+        stmt = select(Message).where(Message.course_id == course_id).order_by(Message.created_at)
         result = await self.session.execute(stmt)
-        return result.scalars().all()
+        messages =  result.scalars().all()
+        return list[Message](messages)
 
 
 async def get_message_dao(session: AsyncSession = Depends(get_async_session)):

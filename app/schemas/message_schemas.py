@@ -14,6 +14,6 @@ class MessageRead(BaseModel):
     content: str = Field(..., description="Message content")
     course_id: int = Field(..., description="ID of the course")
     sender_id: int = Field(..., description="ID of the sender")
-    timestamp: datetime = Field(..., description="Timestamp of when the message was sent")
+    created_at: datetime = Field(..., description="Timestamp of when the message was sent")
 
     model_config = ConfigDict(from_attributes=True)
