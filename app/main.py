@@ -9,6 +9,7 @@ from app.controllers.users_controller import users_router
 from app.controllers.courses_controller import courses_router
 from app.controllers.payments_controller import payments_router
 from app.schemas.user_schemas import UserCreate, UserRead, UserUpdate
+from app.controllers.messages_controller import messages_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI): # noqa
@@ -75,3 +76,4 @@ app.include_router(
 app.include_router(router=users_router)
 app.include_router(router=courses_router)
 app.include_router(router=payments_router)
+app.include_router(router=messages_router)
