@@ -55,6 +55,14 @@ class User(SQLAlchemyBaseUserTable[int], Base):
         lazy="selectin",
     )
 
+    messages_sent = relationship(
+        "Message",
+        back_populates="sender",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+
     @property
     def full_name(self) -> str:
         """Return the full name of the user."""

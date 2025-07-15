@@ -38,7 +38,11 @@ class Course(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    instructor = relationship("User", back_populates="courses_teaching")
+    instructor = relationship(
+        "User", 
+        back_populates="courses_teaching"
+    )
+
     lessons = relationship(
         "Lesson",
         back_populates="course",
@@ -46,7 +50,19 @@ class Course(Base):
         order_by="Lesson.order",
         lazy="selectin"
     )
-    payments = relationship("Payment", back_populates="course")
+    
+    payments = relationship(
+        "Payment", 
+        back_populates="course"
+    )
+    
+    # Mediator
+    messages = relationship(
+        "Message", 
+        back_populates="course", 
+        cascade="all, delete-orphan", 
+        lazy="selectin"
+    )
 
     def display_content(self):
         """Display the course content in a structured format."""
