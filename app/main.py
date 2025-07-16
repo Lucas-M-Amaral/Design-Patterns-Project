@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.database import create_db_and_tables
 
@@ -28,6 +29,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 """FastAPI: application instance for the Course Platform API."""
+
+# Middleware Configuration
+# ------------------------------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins, adjust as needed
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods, adjust as needed
+    allow_headers=["*"],  # Allows all headers, adjust as needed
+)
 
 # Logging Configuration
 # ------------------------------------------------------------------------------

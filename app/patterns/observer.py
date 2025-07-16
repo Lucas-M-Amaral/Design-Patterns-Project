@@ -2,16 +2,14 @@ from abc import ABC, abstractmethod
 from typing import List, Dict
 
 
-# ==============================
-# SUBJECT (Notification Center)
-# ==============================
+# Observer Pattern for Notifications
 class Observer(ABC):
     """Interface for all observers (students and instructors)."""
 
     @abstractmethod
     async def update(self, message: str) -> Dict:
         """Receive a notification update and return structured JSON."""
-        pass
+        raise NotImplementedError("Subclasses must implement this method.")
 
 
 class NotificationCenter:
@@ -41,11 +39,10 @@ class NotificationCenter:
         for observer in self._observers:
             notifications.append(await observer.update(message))
 
-        self._observers.clear()  # Limpa após notificação
+        self._observers.clear()  # Clear observers after notification to avoid duplicates
         return notifications
 
 
-# OBSERVERS (Students / Instructors)
 class StudentObserver(Observer):
     """Concrete Observer representing a student."""
 

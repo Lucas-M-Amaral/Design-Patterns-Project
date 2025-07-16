@@ -27,8 +27,6 @@ async def create_work(
         return await bo.create_work(work_data=work_data, instructor_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @works_router.delete("/{work_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -47,8 +45,6 @@ async def delete_work(
         await bo.delete_work(work_id=work_id, instructor_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @works_router.get("/course/{course_id}", response_model=List[WorkRead])
@@ -63,11 +59,9 @@ async def list_works_by_course(
     - Students: Can view works only if enrolled in the course.
     """
     try:
-        # ✅ Instrutores podem ver todos os trabalhos do curso
         if current_user.is_instructor:
             return await bo.list_works_by_course(course_id=course_id)
 
-        # ✅ Estudantes só podem ver se estiverem matriculados
         if current_user.is_student:
             is_enrolled = await bo.check_student_enrollment(
                 student_id=current_user.id,
@@ -80,7 +74,6 @@ async def list_works_by_course(
                 )
             return await bo.list_works_by_course(course_id=course_id)
 
-        # ✅ Qualquer outro tipo de usuário não tem permissão
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view works of this course."
@@ -88,8 +81,6 @@ async def list_works_by_course(
 
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @works_router.get("/{work_id}/answers", response_model=List[WorkAnswerRead])
@@ -117,12 +108,8 @@ async def list_answers_by_work(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view answers for this work."
         )
-
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
 
 
 @works_router.post("/answer", response_model=WorkAnswerWithNotifications)
@@ -141,8 +128,6 @@ async def submit_or_update_answer(
         return await bo.submit_answer(answer_data=answer_data, student_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @works_router.get("/{work_id}/my-answer", response_model=WorkAnswerRead)
@@ -161,5 +146,3 @@ async def get_my_answer_for_work(
         return await bo.get_my_answer_for_work(work_id=work_id, student_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

@@ -30,7 +30,8 @@ class WorkDAO:
 
     async def get_works_by_course(self, course_id: int) -> List[Work]:
         result = await self.session.execute(select(Work).where(Work.course_id == course_id))
-        return result.scalars().all()
+        works =  result.scalars().all()
+        return list[Work](works)
 
 
 class WorkAnswerDAO:
@@ -62,7 +63,8 @@ class WorkAnswerDAO:
 
     async def get_answers_by_work(self, work_id: int) -> List[WorkAnswer]:
         result = await self.session.execute(select(WorkAnswer).where(WorkAnswer.work_id == work_id))
-        return result.scalars().all()
+        work_answers =  result.scalars().all()
+        return list[WorkAnswer](work_answers)
     
     async def get_answer_by_student_and_work(self, work_id: int, student_id: int) -> WorkAnswer | None:
         """

@@ -1,7 +1,5 @@
-from datetime import datetime
-from typing import List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, String, JSON, DateTime
+from sqlalchemy import ForeignKey, String, JSON
 
 from app.utils.models import Base
 
@@ -30,6 +28,9 @@ class WorkAnswer(Base):
     answers: Mapped[list] = mapped_column(JSON, nullable=False)
     student_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     work_id: Mapped[int] = mapped_column(ForeignKey("works.id", ondelete="CASCADE"), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    work = relationship("Work", back_populates="answers", lazy="selectin")
+    work = relationship(
+        "Work",
+        back_populates="answers",
+        lazy="selectin"
+    )

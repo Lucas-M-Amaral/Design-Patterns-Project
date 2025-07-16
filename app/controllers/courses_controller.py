@@ -36,9 +36,9 @@ async def create_course(
             instructor_id=current_user.id,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @courses_router.get("/", response_model=PaginatedResponse[CourseReadPartial])
@@ -62,7 +62,7 @@ async def get_all_courses(
             items=items
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @courses_router.get("/{course_id}", response_model=CourseRead[LessonReadPartial])
@@ -75,9 +75,9 @@ async def get_course_by_id(
     try:
         return await bo.get_course_by_id(course_id=course_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @courses_router.patch("/{course_id}", response_model=CourseReadPartial)
@@ -120,9 +120,7 @@ async def delete_course(
             )
         await bo.delete_course(course_id=course_id, instructor_id=current_user.id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @courses_router.post("/{course_id}/lessons", response_model=LessonRead[LessonReadPartial])
@@ -145,9 +143,7 @@ async def create_lesson(
             lesson_data=lesson_data
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @courses_router.get("/{course_id}/lessons/{lesson_id}", response_model=LessonRead)
@@ -175,9 +171,7 @@ async def get_lesson_by_id(
             lesson_id=lesson_id
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @courses_router.delete("/{course_id}/lessons/{lesson_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -200,9 +194,7 @@ async def delete_lesson(
             lesson_id=lesson_id
         )
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @courses_router.post("/{course_id}/lessons/{lesson_id}/clone", response_model=LessonRead[LessonReadPartial])
@@ -229,6 +221,4 @@ async def clone_lesson(
             instructor_id=current_user.id
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

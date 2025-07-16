@@ -85,10 +85,11 @@ class PaymentDAO:
         stmt = (
             select(Payment)
             .where(Payment.course_id == course_id)
-            .options(selectinload(Payment.user))  # Para acessar o user_id
+            .options(selectinload(Payment.user))
         )
         result = await self.session.execute(stmt)
-        return result.scalars().all()
+        payments = result.scalars().all()
+        return list[Payment](payments)
 
 
 async def get_payment_dao(session: AsyncSession = Depends(get_async_session)):

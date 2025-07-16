@@ -1,6 +1,7 @@
 from fastapi import Depends
 from typing import List
 
+from app.models.users import UserManager, get_user_manager
 from app.schemas.work_schemas import (
     WorkCreate, WorkRead, WorkAnswerCreate, WorkAnswerRead,
     WorkWithNotifications, WorkAnswerWithNotifications, NotificationRead
@@ -10,7 +11,6 @@ from app.patterns.data_access_objects.works_dao import (
 )
 from app.patterns.data_access_objects.courses_dao import CourseDAO, get_course_dao
 from app.patterns.data_access_objects.payments_dao import PaymentDAO, get_payment_dao
-from app.models.users import UserManager, get_user_manager
 from app.patterns.observer import (
     NotificationCenter, StudentObserver, InstructorObserver
 )
@@ -42,6 +42,7 @@ class WorkBO:
         payment_dao: PaymentDAO = Depends(get_payment_dao),
         user_manager: UserManager = Depends(get_user_manager),
     ):
+        """Dependency injection factory method to create a WorkBO instance with DAO dependencies."""
         return cls(work_dao, work_answer_dao, course_dao, payment_dao, user_manager)
 
     async def create_work(self, work_data: WorkCreate, instructor_id: int) -> WorkWithNotifications:
@@ -52,11 +53,9 @@ class WorkBO:
         if course.instructor_id != instructor_id:
             raise ValueError("You do not have permission to post works in this course")
 
-        # ✅ Agora podemos salvar diretamente a lista (JSON no banco)
         work_dict = work_data.model_dump()
         work = await self.work_dao.create_work(work_dict)
 
-        # Buscar todos os alunos matriculados no curso via PaymentDAO
         payments = await self.payment_dao.get_all_payments_by_course(course.id)
         notification_center = NotificationCenter()
         for payment in payments:
@@ -70,7 +69,7 @@ class WorkBO:
             work=WorkRead(
                 id=work.id,
                 title=work.title,
-                questions=work.questions,  # ✅ já é lista
+                questions=work.questions,
                 course_id=work.course_id
             ),
             notifications=[NotificationRead(**msg) for msg in messages]
@@ -92,7 +91,7 @@ class WorkBO:
         if not work:
             raise ValueError("Work not found")
 
-        # ✅ Verificar se o aluno está matriculado no curso do trabalho
+        # Verifies if the student is enrolled in the course
         is_enrolled = await self.check_student_enrollment(
             student_id=student_id,
             course_id=work.course_id
@@ -108,10 +107,10 @@ class WorkBO:
 
         answer = await self.work_answer_dao.submit_or_update_answer(answer_dict)
 
-        # Notificar apenas o professor
+        # Notify the instructor about the new or updated answer
         course = await self.course_dao.get_course_by_id(work.course_id)
         notification_center = NotificationCenter()
-        notification_center.attach(InstructorObserver(course.instructor_id))
+        notification_center.attach(InstructorObserver(course.instructor_id)) # noqa
 
         messages = await notification_center.notify(
             f"Student {student_id} submitted/updated an answer to work '{work.title}'."
@@ -122,33 +121,34 @@ class WorkBO:
                 id=answer.id,
                 work_id=answer.work_id,
                 student_id=answer.student_id,
-                answers=answer.answers,  # ✅ já é lista
+                answers=answer.answers,
                 updated_at=answer.updated_at
             ),
             notifications=[NotificationRead(**msg) for msg in messages]
         )
 
-
     async def list_works_by_course(self, course_id: int) -> List[WorkRead]:
+        """List all works for a specific course."""
         works = await self.work_dao.get_works_by_course(course_id)
         return [
             WorkRead(
                 id=w.id,
                 title=w.title,
-                questions=w.questions,  # ✅ já é lista
+                questions=w.questions,
                 course_id=w.course_id
             )
             for w in works
         ]
 
     async def list_answers_by_work(self, work_id: int) -> List[WorkAnswerRead]:
+        """Retrieve all answers submitted for a specific work."""
         answers = await self.work_answer_dao.get_answers_by_work(work_id)
         return [
             WorkAnswerRead(
                 id=a.id,
                 work_id=a.work_id,
                 student_id=a.student_id,
-                answers=a.answers,  # ✅ já é lista
+                answers=a.answers,
                 updated_at=a.updated_at
             )
             for a in answers
