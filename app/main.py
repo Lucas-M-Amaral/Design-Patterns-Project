@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.database import create_db_and_tables
 
@@ -10,6 +11,7 @@ from app.controllers.courses_controller import courses_router
 from app.controllers.payments_controller import payments_router
 from app.schemas.user_schemas import UserCreate, UserRead, UserUpdate
 from app.controllers.messages_controller import messages_router
+from app.controllers.works_controller import works_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI): # noqa
@@ -27,6 +29,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 """FastAPI: application instance for the Course Platform API."""
+
+# Middleware Configuration
+# ------------------------------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins, adjust as needed
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods, adjust as needed
+    allow_headers=["*"],  # Allows all headers, adjust as needed
+)
 
 # Logging Configuration
 # ------------------------------------------------------------------------------
@@ -77,3 +89,4 @@ app.include_router(router=users_router)
 app.include_router(router=courses_router)
 app.include_router(router=payments_router)
 app.include_router(router=messages_router)
+app.include_router(router=works_router)

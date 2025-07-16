@@ -64,6 +64,14 @@ class Course(Base):
         lazy="selectin"
     )
 
+    # Observer
+    works = relationship(
+        "Work",
+        back_populates="course",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
     def display_content(self):
         """Display the course content in a structured format."""
         render_content = [f"Course: {self.title}"]

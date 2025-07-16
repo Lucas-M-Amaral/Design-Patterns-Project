@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from app.models.courses import Lesson
 
 
+# Prototype Pattern for Cloning Lessons
 class Prototype(ABC):
     """Abstract base class for the Prototype pattern."""
 
