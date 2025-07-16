@@ -79,6 +79,16 @@ class PaymentDAO:
         result = await self.session.execute(stmt)
         payments = result.scalars().all()
         return list[Payment](payments)
+    
+    async def get_all_payments_by_course(self, course_id: int) -> List[Payment]:
+        """Get all payments for a specific course (all enrolled students)."""
+        stmt = (
+            select(Payment)
+            .where(Payment.course_id == course_id)
+            .options(selectinload(Payment.user))  # Para acessar o user_id
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
 
 
 async def get_payment_dao(session: AsyncSession = Depends(get_async_session)):
