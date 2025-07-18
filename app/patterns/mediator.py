@@ -1,36 +1,29 @@
-# app/patterns/mediator.py
-
 import logging
 from abc import ABC, abstractmethod
 from typing import List
 
 from app.schemas.message_schemas import MessageCreate
-from app.models.messages import Message  # ✅ ORM
+from app.models.messages import Message
 from app.models.users import UserManager
 from app.patterns.data_access_objects.messages_dao import MessageDAO
 from app.patterns.data_access_objects.courses_dao import CourseDAO
 
 
-# ==============================
-# Mediator Interface
-# ==============================
+# Mediator for Course Chat between students and instructors
 class ChatMediator(ABC):
     """Abstract Mediator for course chat communication."""
 
     @abstractmethod
     async def send_message(self, message_data: MessageCreate, sender_id: int) -> Message:
         """Send a message to the course chat."""
-        pass
+        raise NotImplementedError("This method should be overridden in subclasses")
 
     @abstractmethod
     async def get_messages(self, course_id: int, user_id: int) -> List[Message]:
         """Retrieve all messages from a course chat."""
-        pass
+        raise NotImplementedError("This method should be overridden in subclasses")
 
 
-# ==============================
-# Concrete Mediator
-# ==============================
 class CourseChatMediator(ChatMediator):
     """Concrete Mediator coordinating communication in a course chat."""
 
@@ -48,7 +41,7 @@ class CourseChatMediator(ChatMediator):
 
             if course.instructor_id != sender_id:
                 my_courses = await self.user_manager.get_my_courses(user_id=sender_id)
-                logging.debug(f"User {sender_id} my_courses: {my_courses}")
+                logging.info(f"User {sender_id} my_courses: {my_courses}")
                 course_ids = [p.course.id for p in my_courses if p.course]
                 if course.id not in course_ids:
                     raise ValueError("You do not have access to this course")

@@ -1,5 +1,3 @@
-# app/patterns/business_objects/messages_bo.py
-
 from fastapi import Depends
 from typing import List
 
@@ -23,6 +21,7 @@ class MessageBO:
         user_manager: UserManager = Depends(get_user_manager),
         course_dao: CourseDAO = Depends(get_course_dao),
     ):
+        """Dependency injection factory method to create a BO instance with DAO dependencies."""
         mediator = CourseChatMediator(
             message_dao=message_dao,
             user_manager=user_manager,
@@ -31,11 +30,11 @@ class MessageBO:
         return cls(mediator)
 
     async def send_message(self, message_data: MessageCreate, sender_id: int) -> MessageRead:
-        # ✅ Mediator retorna o modelo ORM (Message), BO converte para Pydantic
+        """Sends a message to the course chat."""
         message = await self.mediator.send_message(message_data, sender_id)
         return MessageRead.model_validate(message)
 
     async def get_messages(self, course_id: int, user_id: int) -> List[MessageRead]:
-        # ✅ Converte cada mensagem do ORM para Pydantic
+        """Retrieves all messages from a course chat."""
         messages = await self.mediator.get_messages(course_id, user_id)
         return [MessageRead.model_validate(m) for m in messages]
