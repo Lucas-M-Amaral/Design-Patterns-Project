@@ -17,3 +17,7 @@ pydantic_core==2.33.2 # https://github.com/pydantic/pydantic-core
 # Env variables management
 # ------------------------------------------------------------------------------
 python-dotenv==1.1.0  # https://github.com/theskumar/python-dotenv
+
+# Utils
+# ------------------------------------------------------------------------------
+pylint==3.3.7 # https://github.com/pylint-dev/pylint

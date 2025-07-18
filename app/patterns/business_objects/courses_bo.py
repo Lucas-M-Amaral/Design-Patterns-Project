@@ -47,7 +47,15 @@ class CourseBO:
         course_data_dict.update({"instructor_id": instructor_id})
 
         course = await self.course_dao.create_course(course_data=course_data_dict)
-        return CourseRead.model_validate(course)
+        return CourseRead(
+            id=course.id,
+            title=course.title,
+            description=course.description,
+            price=course.price,
+            is_active=course.is_active,
+            instructor_id=course.instructor_id,
+            instructor_name=course.instructor.full_name,
+        )
 
     async def get_course_by_id(self, course_id: int) -> Optional[CourseRead[LessonReadPartial]]:
         """Get the structure of a course by its ID."""
@@ -57,13 +65,31 @@ class CourseBO:
         if not course:
             raise ValueError("Course not found")
         logging.info(course.display_content())
-        return CourseRead[LessonReadPartial].model_validate(course)
+        lessons_list = [LessonReadPartial.model_validate(lesson) for lesson in course.lessons]
+        return CourseRead[LessonReadPartial](
+            id=course.id,
+            title=course.title,
+            description=course.description,
+            price=course.price,
+            is_active=course.is_active,
+            instructor_id=course.instructor_id,
+            instructor_name=course.instructor.full_name,
+            lessons=lessons_list
+        )
 
     async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseReadPartial]:
         """Get a paginated list of all business_objects."""
         courses =  await self.course_dao.get_all_courses(offset, limit)
         return [
-            CourseReadPartial.model_validate(course)
+            CourseReadPartial(
+                id=course.id,
+                title=course.title,
+                description=course.description,
+                price=course.price,
+                is_active=course.is_active,
+                instructor_id=course.instructor_id,
+                instructor_name=course.instructor.full_name
+            )
             for course in courses
         ]
 

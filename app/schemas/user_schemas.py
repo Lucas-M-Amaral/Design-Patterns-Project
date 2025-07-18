@@ -4,6 +4,7 @@ from pydantic import Field, ConfigDict
 
 from app.models.users import UserTypeEnum
 from app.schemas.course_schemas import CoursesTeaching
+from app.schemas.payment_schemas import PaymentRead
 
 
 class UserCreate(schemas.BaseUserCreate):
@@ -51,6 +52,10 @@ class UserRead(schemas.BaseUser[int]):
     courses_teaching: List[CoursesTeaching] = Field(
         default_factory=list,
         description="List of courses the instructor is teaching, if applicable."
+    )
+    payments: List[PaymentRead] = Field(
+        default_factory=list,
+        description="List of payments made by the user."
     )
 
     model_config = ConfigDict(from_attributes=True)

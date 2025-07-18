@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.users import User
 from app.models.courses import Course, Lesson
 from app.patterns.prototype import LessonPrototype
 from app.db.database import get_async_session
@@ -50,9 +51,10 @@ class CourseDAO:
         stmt = (
             select(Course)
             .options(selectinload(Course.lessons))
+            .options(selectinload(Course.instructor))
             .offset(offset)
             .limit(limit)
-        )
+        ).join(User, Course.instructor_id == User.id)
         result = await self.session.execute(stmt)
         courses = result.scalars().all()
         return list[Course](courses)

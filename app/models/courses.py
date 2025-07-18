@@ -37,12 +37,10 @@ class Course(Base):
     instructor_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-
     instructor = relationship(
         "User", 
         back_populates="courses_teaching"
     )
-
     lessons = relationship(
         "Lesson",
         back_populates="course",
@@ -50,12 +48,10 @@ class Course(Base):
         order_by="Lesson.order",
         lazy="selectin"
     )
-    
     payments = relationship(
         "Payment", 
         back_populates="course"
     )
-    
     # Mediator
     messages = relationship(
         "Message", 
@@ -63,7 +59,6 @@ class Course(Base):
         cascade="all, delete-orphan", 
         lazy="selectin"
     )
-
     # Observer
     works = relationship(
         "Work",

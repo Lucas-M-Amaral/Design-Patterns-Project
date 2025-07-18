@@ -82,9 +82,11 @@ class CourseReadPartial(BaseModel):
     """Schema for reading a course not achieved yet."""
     id: int = Field(..., description="Unique course identifier")
     title: str = Field(..., description="Course title")
+    description: str | None = Field(None, description="Course description")
     price: float = Field(..., description="Course price")
     is_active: bool = Field(..., description="Course availability status")
     instructor_id: int = Field(..., description="ID of the instructor")
+    instructor_name: str = Field(..., description="Name of the instructor")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -97,6 +99,7 @@ class CourseRead(BaseModel, Generic[T]):
     price: float = Field(..., description="Course price")
     is_active: bool = Field(..., description="Course availability status")
     instructor_id: int = Field(..., description="ID of the instructor")
+    instructor_name: str = Field(..., description="Name of the instructor")
     lessons: List[T] = Field(default_factory=list, description="List of lessons in this course")
 
     model_config = ConfigDict(from_attributes=True)
