@@ -8,6 +8,7 @@ implementing Design Patterns such as Composite, Chain of Responsibility, Prototy
 - [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
+  - [Install Dependencies](#install-dependencies)
   - [Environment Variables](#environment-variables)
   - [Running with Docker Compose](#running-with-docker-compose)
 - [API Documentation](#api-documentation)
@@ -42,14 +43,27 @@ If you choose to run the project locally without Docker, you'll also need:
 
 ## Setup
 
+### Install Dependencies
+
+First you need to install the libs from `requirements.txt` file. This file contains all the necessary dependencies 
+for the project. 
+
+- **Install the required Python packages:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
 ### Environment Variables
 
-This project relies on environment variables for configuration. You'll need to set up a `.env` file in the project root.
+Then you need to create a `.env` file that contains the environment variables required for the 
+application to run.
 
-1.  **Create the `.env` file:**
+- **Create the `.env` file:**
     ```bash
     python merge_default_dotenvs_in_dotenv.py
     ```
+
+
 
 ### Running with Docker Compose
 

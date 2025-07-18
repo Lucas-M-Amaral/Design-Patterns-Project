@@ -36,6 +36,7 @@ class LessonReadPartial(BaseModel):
     lesson_type: LessonTypeEnum = Field(..., description="Type of the lesson")
     order: int = Field(..., description="Position in course sequence")
     course_id: int = Field(..., description="ID of the parent course")
+    parent_id: int | None = Field(None, description="ID of the parent module if this is a sub-lesson")
 
     model_config = ConfigDict(from_attributes=True)
 

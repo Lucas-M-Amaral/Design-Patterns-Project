@@ -31,8 +31,8 @@ class CourseDAO:
                 selectinload(Lesson.children),
                 selectinload(Lesson.prerequisite),
                 selectinload(Lesson.parent),
-            )
-        )
+            ),
+            selectinload(Course.instructor))
         )
         result = await self.session.execute(stmt)
         course = result.scalars().first()
