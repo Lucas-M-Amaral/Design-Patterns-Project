@@ -1,10 +1,11 @@
 from typing import List, Optional
-
 from fastapi import Depends
+
 from app.models.users import UserManager, get_user_manager
 from app.schemas.course_schemas import CourseReadPartial
 from app.patterns.chain_of_responsability import ConcreteLessonProgressHandler
 from app.patterns.data_access_objects.courses_dao import LessonDAO, get_lesson_dao
+from app.utils.exceptions import PermissionDeniedError, NotFoundError
 
 
 class StudentBO:
@@ -46,6 +47,8 @@ class StudentBO:
         lesson_progressions = await self.user_manager.get_my_lesson_progressions(
             user_id=student_id
         )
+        if not lesson_progressions:
+            raise PermissionDeniedError("You did not enroll in this course")
         progress_dict = {lp.lesson_id: lp for lp in lesson_progressions}
 
         lesson = await self.lesson_dao.get_lesson_by_id(
@@ -53,7 +56,7 @@ class StudentBO:
             course_id=course_id
         )
         if not lesson:
-            raise ValueError("Lesson not found")
+            raise NotFoundError(f"Lesson with ID {lesson_id} not found in course {course_id}")
 
         handler = ConcreteLessonProgressHandler(lesson=lesson)
 

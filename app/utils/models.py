@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from sqlalchemy import DateTime, func
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
-from datetime import datetime
+
 
 class Base(DeclarativeBase):
     """Base class for all models in the application."""

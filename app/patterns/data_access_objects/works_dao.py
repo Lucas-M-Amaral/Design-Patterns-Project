@@ -14,6 +14,7 @@ class WorkDAO:
         self.session = session
 
     async def create_work(self, work_data: Dict[str, Any]) -> Work:
+        """Insert a new work into the database."""
         work = Work(**work_data)
         self.session.add(work)
         await self.session.commit()
@@ -21,15 +22,20 @@ class WorkDAO:
         return work
 
     async def get_work_by_id(self, work_id: int) -> Work | None:
-        result = await self.session.execute(select(Work).where(Work.id == work_id))
+        """Retrieve a work by its ID."""
+        stmt = select(Work).where(Work.id == work_id)
+        result = await self.session.execute(stmt)
         return result.scalars().first()
 
     async def delete_work(self, work: Work) -> None:
+        """Delete a work from the database."""
         await self.session.delete(work)
         await self.session.commit()
 
     async def get_works_by_course(self, course_id: int) -> List[Work]:
-        result = await self.session.execute(select(Work).where(Work.course_id == course_id))
+        """Retrieve all works associated with a specific course."""
+        stmt = select(Work).where(Work.course_id == course_id)
+        result = await self.session.execute(stmt)
         works =  result.scalars().all()
         return list[Work](works)
 
@@ -62,7 +68,11 @@ class WorkAnswerDAO:
         return answer
 
     async def get_answers_by_work(self, work_id: int) -> List[WorkAnswer]:
-        result = await self.session.execute(select(WorkAnswer).where(WorkAnswer.work_id == work_id))
+        """Retrieve all answers submitted for a specific work."""
+        stmt = select(WorkAnswer).where(
+            WorkAnswer.work_id == work_id
+        )
+        result = await self.session.execute(stmt)
         work_answers =  result.scalars().all()
         return list[WorkAnswer](work_answers)
     
@@ -77,7 +87,6 @@ class WorkAnswerDAO:
         )
         result = await self.session.execute(stmt)
         return result.scalars().first()
-
 
 
 async def get_work_dao(session: AsyncSession = Depends(get_async_session)):

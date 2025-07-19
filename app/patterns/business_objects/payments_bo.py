@@ -1,4 +1,5 @@
 from typing import List, Optional, Any
+from decimal import Decimal
 from fastapi import Depends
 
 from app.models.payments import PaymentTypeEnum
@@ -11,6 +12,7 @@ from app.patterns.strategy import (
 from app.patterns.data_access_objects.courses_dao import CourseDAO, get_course_dao
 from app.patterns.data_access_objects.payments_dao import PaymentDAO, get_payment_dao
 from app.schemas.payment_schemas import PaymentCreate, PaymentRead, CourseReadPartial
+from app.utils.exceptions import NotFoundError, ValidationError
 
 
 class PaymentBO:
@@ -29,7 +31,7 @@ class PaymentBO:
         return cls(payment_dao, course_dao)
 
     @staticmethod
-    async def apply_payment_strategy(amount: float, payment_type) -> dict[str, Any]:
+    async def apply_payment_strategy(amount: Decimal, payment_type) -> dict[str, Any]:
         """Apply the appropriate payment strategy based on the payment type."""
         match payment_type:
             case PaymentTypeEnum.CREDIT_CARD:
@@ -39,34 +41,30 @@ class PaymentBO:
             case PaymentTypeEnum.PIX:
                 strategy = PixPaymentStrategy()
             case _:
-                raise ValueError(f"Unsupported payment type: {payment_type}")
+                raise ValidationError(f"Unsupported payment type: {payment_type}")
 
         context = PaymentContext(strategy)
         return context.process_payment(
-            amount=amount,
+            amount=float(amount),
             payment_type=payment_type
         )
 
     async def create_payment(
             self, payment_data: PaymentCreate, user_id: int, course_id: int
-    ) -> PaymentRead:
-        """Create a new payment with the provided data."""
-        if payment_data.amount < 0:
-            raise ValueError("Payment amount cannot be negative")
-
+    ) -> PaymentRead[CourseReadPartial]:
         course = await self.course_dao.get_course_by_id(course_id=course_id)
         if not course:
-            raise ValueError("Course not found")
+            raise NotFoundError("Course not found")
 
-        if course.price != payment_data.amount:
-            raise ValueError("Payment amount does not match course price")
+        if payment_data.amount != course.price:
+            raise ValidationError("Payment amount does not match course price")
 
         already_paid = await self.payment_dao.get_payment_get_by_course_id(
             course_id=course_id,
             user_id=user_id
         )
         if already_paid:
-            raise ValueError("Payment for this course has already been made")
+            raise ValidationError("Payment for this course has already been made")
 
         strategy = await self.apply_payment_strategy(
             amount=payment_data.amount,
@@ -82,7 +80,20 @@ class PaymentBO:
         })
 
         payment = await self.payment_dao.create_payment(payment_data=payment_data_dict)
-        return PaymentRead[CourseReadPartial].model_validate(payment)
+
+        payment_dict = payment.__dict__.copy()
+        payment_dict.update(
+            course=CourseReadPartial(
+                id=course.id,
+                title=course.title,
+                description=course.description,
+                price=course.price,
+                is_active=course.is_active,
+                instructor_id=course.instructor_id,
+                instructor_name=course.instructor.full_name
+            )
+        )
+        return PaymentRead[CourseReadPartial](**payment_dict)
 
     async def get_payment_by_id(self, payment_id: int, user_id: int) -> Optional[PaymentRead[CourseReadPartial]]:
         """Get a payment by its ID."""
@@ -91,8 +102,23 @@ class PaymentBO:
             user_id=user_id
         )
         if not payment:
-            raise ValueError("Payment not found")
-        return PaymentRead[CourseReadPartial].model_validate(payment)
+            raise NotFoundError("Payment not found")
+
+        payment_dict = payment.__dict__.copy()
+        payment_dict.update(
+            course=CourseReadPartial(
+                id=payment.course.id,
+                title=payment.course.title,
+                description=payment.course.description,
+                price=payment.course.price,
+                is_active=payment.course.is_active,
+                instructor_id=payment.course.instructor_id,
+                instructor_name=payment.course.instructor.full_name
+            )
+        )
+        return PaymentRead[CourseReadPartial](
+            **payment_dict
+        )
 
     async def get_all_payments(
             self, user_id: int, offset: int = 0, limit: int = 100
@@ -103,7 +129,20 @@ class PaymentBO:
             offset=offset,
             limit=limit
         )
-        return [
-            PaymentRead[CourseReadPartial].model_validate(payment)
-            for payment in payments
-        ]
+
+        results = []
+        for payment in payments:
+            payment_dict = payment.__dict__.copy()
+            payment_dict.update(
+                course=CourseReadPartial(
+                    id=payment.course.id,
+                    title=payment.course.title,
+                    description=payment.course.description,
+                    price=payment.course.price,
+                    is_active=payment.course.is_active,
+                    instructor_id=payment.course.instructor_id,
+                    instructor_name=payment.course.instructor.full_name
+                )
+            )
+            results.append(PaymentRead[CourseReadPartial](**payment_dict))
+        return results

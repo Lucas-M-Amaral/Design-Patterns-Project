@@ -14,6 +14,7 @@ from app.patterns.data_access_objects.payments_dao import PaymentDAO, get_paymen
 from app.patterns.observer import (
     NotificationCenter, StudentObserver, InstructorObserver
 )
+from app.utils.exceptions import ValidationError, NotFoundError, PermissionDeniedError
 
 
 class WorkBO:
@@ -49,9 +50,11 @@ class WorkBO:
         """Instructor posts a new work and students are notified."""
         course = await self.course_dao.get_course_by_id(work_data.course_id)
         if not course:
-            raise ValueError("Course not found")
+            raise NotFoundError("Course not found")
         if course.instructor_id != instructor_id:
-            raise ValueError("You do not have permission to post works in this course")
+            raise PermissionDeniedError(
+                "You do not have permission to post works in this course"
+            )
 
         work_dict = work_data.model_dump()
         work = await self.work_dao.create_work(work_dict)
@@ -79,17 +82,17 @@ class WorkBO:
         """Instructor deletes a work."""
         work = await self.work_dao.get_work_by_id(work_id)
         if not work:
-            raise ValueError("Work not found")
+            raise NotFoundError("Work not found")
         course = await self.course_dao.get_course_by_id(work.course_id)
         if course.instructor_id != instructor_id:
-            raise ValueError("You do not have permission to delete this work")
+            raise PermissionDeniedError("You do not have permission to delete this work")
         await self.work_dao.delete_work(work)
 
     async def submit_answer(self, answer_data: WorkAnswerCreate, student_id: int) -> WorkAnswerWithNotifications:
         """Student submits or updates their answer and instructor is notified."""
         work = await self.work_dao.get_work_by_id(answer_data.work_id)
         if not work:
-            raise ValueError("Work not found")
+            raise NotFoundError("Work not found")
 
         # Verifies if the student is enrolled in the course
         is_enrolled = await self.check_student_enrollment(
@@ -97,7 +100,9 @@ class WorkBO:
             course_id=work.course_id
         )
         if not is_enrolled:
-            raise ValueError("You are not enrolled in this course and cannot answer this work.")
+            raise PermissionDeniedError(
+                "You are not enrolled in this course and cannot answer this work."
+            )
 
         answer_dict = {
             "work_id": answer_data.work_id,
@@ -155,24 +160,23 @@ class WorkBO:
         ]
     
     async def get_my_answer_for_work(self, work_id: int, student_id: int) -> WorkAnswerRead:
-        """
-        Retrieve the student's own answer for a specific work.
-        Raises ValueError if no answer is found or if the student is not enrolled in the course.
-        """
+        """Retrieve the student's own answer for a specific work."""
         work = await self.work_dao.get_work_by_id(work_id)
         if not work:
-            raise ValueError("Work not found")
+            raise NotFoundError("Work not found")
 
         is_enrolled = await self.check_student_enrollment(student_id=student_id, course_id=work.course_id)
         if not is_enrolled:
-            raise ValueError("You are not enrolled in this course.")
+            raise PermissionDeniedError("You are not enrolled in this course.")
 
         answer = await self.work_answer_dao.get_answer_by_student_and_work(
             work_id=work_id,
             student_id=student_id
         )
         if not answer:
-            raise ValueError("No answer found for this work by the current student.")
+            raise NotFoundError(
+                "No answer found for this work by the current student."
+            )
 
         return WorkAnswerRead(
             id=answer.id,

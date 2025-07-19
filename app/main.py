@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.database import create_db_and_tables
@@ -12,6 +13,7 @@ from app.controllers.payments_controller import payments_router
 from app.schemas.user_schemas import UserCreate, UserRead, UserUpdate
 from app.controllers.messages_controller import messages_router
 from app.controllers.works_controller import works_router
+from app.utils.exceptions import NotFoundError, PermissionDeniedError, ValidationError
 
 @asynccontextmanager
 async def lifespan(app: FastAPI): # noqa
@@ -42,7 +44,7 @@ app.add_middleware(
 
 # Logging Configuration
 # ------------------------------------------------------------------------------
-file_handler = logging.FileHandler("app.log")
+file_handler = logging.FileHandler("app.log") # Output log to a file
 console_handler = logging.StreamHandler()
 
 logging.basicConfig(
@@ -53,6 +55,35 @@ logging.basicConfig(
         console_handler
     ],
 )
+
+
+# Exception Handlers
+# ------------------------------------------------------------------------------
+@app.exception_handler(NotFoundError)
+async def not_found_exception_handler(request, exc: NotFoundError): # noqa
+    """Handle NotFoundError exceptions."""
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(PermissionDeniedError)
+async def permission_denied_exception_handler(request, exc: PermissionDeniedError): # noqa
+    """Handle PermissionDeniedError exceptions."""
+    return JSONResponse(
+        status_code=403,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, exc: ValidationError): # noqa
+    """Handle ValidationError exceptions."""
+    return JSONResponse(
+        status_code=400,
+        content={"detail": str(exc)},
+    )
 
 
 # App routers

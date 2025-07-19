@@ -27,3 +27,6 @@ ENV/
 # Temp files
 *.tmp
 *.bak
+
+# Pyreverse Diagrams
+*.puml

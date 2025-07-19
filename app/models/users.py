@@ -129,7 +129,9 @@ fastapi_users = FastAPIUsers[User, int](
     get_user_manager,
     [auth_backend],
 )
-"""FastAPIUsers: Instance for managing user authentication and authorization."""
+"""
+FastAPIUsers: Instance for managing user authentication and authorization.
+"""
 
 user_routers = {
     "auth": fastapi_users.get_auth_router(auth_backend),
