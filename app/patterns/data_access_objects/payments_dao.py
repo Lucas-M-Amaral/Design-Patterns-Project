@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 from fastapi import Depends
 from sqlalchemy import select
@@ -80,7 +80,7 @@ class PaymentDAO:
         payments = result.scalars().all()
         return list[Payment](payments)
     
-    async def get_all_payments_by_course(self, course_id: int) -> List[Payment]:
+    async def get_all_payments_by_course(self, course_id: int) -> Tuple[List[Payment], int]:
         """Get all payments for a specific course (all enrolled students)."""
         stmt = (
             select(Payment)
@@ -89,7 +89,7 @@ class PaymentDAO:
         )
         result = await self.session.execute(stmt)
         payments = result.scalars().all()
-        return list[Payment](payments)
+        return list[Payment](payments), len(payments)
 
 
 async def get_payment_dao(session: AsyncSession = Depends(get_async_session)):

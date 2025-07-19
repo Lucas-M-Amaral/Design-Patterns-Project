@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from app.models.users import User, UserManager, get_user_manager, fastapi_users
 from app.schemas.response_schemas import PaginatedResponse
 from app.schemas.user_schemas import UserRead
-from app.schemas.course_schemas import CourseReadPartial
+from app.schemas.course_schemas import CourseReadPartial, LessonProgressionRead
 from app.patterns.business_objects.students_bo import StudentBO
 
 users_router = APIRouter(prefix="/users", tags=["users"])
@@ -56,7 +56,7 @@ async def get_my_courses(
         )
 
     offset = (page - 1) * per_page
-    courses = await student_bo.get_student_courses(
+    courses = await student_bo. get_student_courses(
         student_id=current_user.id,
         offset=offset,
         limit=per_page
@@ -64,6 +64,37 @@ async def get_my_courses(
     return PaginatedResponse(
         items=courses,
         total=len(courses),
+        page=page,
+        per_page=per_page
+    )
+
+
+@users_router.get("/my-course-progression/{course_id}", response_model=PaginatedResponse[LessonProgressionRead])
+async def get_course_progression(
+        course_id: int,
+        current_user: User = Depends(fastapi_users.current_user()),
+        student_bo: StudentBO = Depends(StudentBO.from_depends),
+        page: int = Query(1, ge=1),
+        per_page: int = Query(10, le=100),
+):
+    """Get the progression of lessons in a course for the current user."""
+    if not current_user.is_student:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this resource."
+        )
+
+    offset = (page - 1) * per_page
+    lesson_progressions = await student_bo.get_student_lesson_progressions(
+        student_id=current_user.id,
+        course_id=course_id,
+        offset=offset,
+        limit=per_page
+    )
+
+    return PaginatedResponse(
+        items=lesson_progressions,
+        total=len(lesson_progressions),
         page=page,
         per_page=per_page
     )

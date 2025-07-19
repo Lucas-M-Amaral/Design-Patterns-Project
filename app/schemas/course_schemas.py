@@ -88,6 +88,7 @@ class CourseReadPartial(BaseModel):
     is_active: bool = Field(..., description="Course availability status")
     instructor_id: int = Field(..., description="ID of the instructor")
     instructor_name: str = Field(..., description="Name of the instructor")
+    students_enrolled: int = Field(0, description="Number of students enrolled in this course")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -101,6 +102,7 @@ class CourseRead(BaseModel, Generic[T]):
     is_active: bool = Field(..., description="Course availability status")
     instructor_id: int = Field(..., description="ID of the instructor")
     instructor_name: str = Field(..., description="Name of the instructor")
+    students_enrolled: int = Field(default=0, description="Number of students enrolled in this course")
     lessons: List[T] = Field(default_factory=list, description="List of lessons in this course")
 
     model_config = ConfigDict(from_attributes=True)
@@ -112,7 +114,6 @@ class CoursesTeaching(BaseModel):
     title: str = Field(..., description="Course title")
     price: float = Field(..., description="Course price")
     is_active: bool = Field(..., description="Course status")
-    students_enrolled: int = Field(0, description="Number of students enrolled in this course")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -123,5 +124,18 @@ class CourseProgressionRead(BaseModel):
     progress_percentage: float = Field(..., ge=0, le=100, description="Percentage of course completed")
     last_lesson_id: int | None = Field(None, description="ID of the last completed lesson")
     last_lesson_title: str | None = Field(None, description="Title of the last completed lesson")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LessonProgressionRead(BaseModel):
+    """Schema for reading lesson progression."""
+    id: int = Field(..., description="Unique identifier for the lesson progression")
+    user_id: int = Field(..., description="ID of the user who completed the lesson")
+    lesson_id: int = Field(..., description="ID of the lesson")
+    lesson_title : str = Field(..., description="Title of the lesson")
+    lesson_type: LessonTypeEnum = Field(..., description="Type of the lesson")
+    lesson_prerequisite_id: int | None = Field(None, description="ID of the prerequisite lesson if applicable")
+    completed: bool = Field(..., description="Whether the lesson has been completed by the user")
 
     model_config = ConfigDict(from_attributes=True)

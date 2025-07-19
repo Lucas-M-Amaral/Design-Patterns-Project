@@ -59,7 +59,7 @@ class WorkBO:
         work_dict = work_data.model_dump()
         work = await self.work_dao.create_work(work_dict)
 
-        payments = await self.payment_dao.get_all_payments_by_course(course.id)
+        payments, _ = await self.payment_dao.get_all_payments_by_course(course.id)
         notification_center = NotificationCenter()
         for payment in payments:
             notification_center.attach(StudentObserver(payment.user_id))

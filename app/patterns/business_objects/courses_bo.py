@@ -7,6 +7,7 @@ from app.patterns.data_access_objects.courses_dao import (
     get_course_dao,
     get_lesson_dao,
 )
+from app.patterns.data_access_objects.payments_dao import PaymentDAO, get_payment_dao
 from app.schemas.course_schemas import (
     CourseCreate,
     CourseRead,
@@ -22,18 +23,20 @@ from app.utils.exceptions import NotFoundError, PermissionDeniedError, Validatio
 class CourseBO:
     """Business Object for Course operations with Composite and Chain of Responsibility patterns"""
 
-    def __init__(self, course_dao: CourseDAO, lesson_dao: LessonDAO):
+    def __init__(self, course_dao: CourseDAO, lesson_dao: LessonDAO, payment_dao: PaymentDAO):
         self.course_dao = course_dao
         self.lesson_dao = lesson_dao
+        self.payment_dao = payment_dao
 
     @classmethod
     async def from_depends(
         cls,
         course_dao: CourseDAO = Depends(get_course_dao),
         lesson_dao: LessonDAO = Depends(get_lesson_dao),
+        payment_dao: PaymentDAO = Depends(get_payment_dao)
     ):
         """Dependency injection factory method to create an BO instance with DAO dependencies."""
-        return cls(course_dao, lesson_dao)
+        return cls(course_dao, lesson_dao, payment_dao)
 
     async def create_course(
         self,
@@ -52,7 +55,7 @@ class CourseBO:
             price=course.price,
             is_active=course.is_active,
             instructor_id=course.instructor_id,
-            instructor_name=course.instructor.full_name,
+            instructor_name=course.instructor.full_name
         )
 
     async def get_course_by_id(self, course_id: int) -> Optional[CourseRead[LessonReadPartial]]:
@@ -63,7 +66,10 @@ class CourseBO:
         if not course:
             raise NotFoundError("Course not found")
         logging.info(course.display_content())
+
         lessons_list = [LessonReadPartial.model_validate(lesson) for lesson in course.lessons]
+        _, students_enrolled = await self.payment_dao.get_all_payments_by_course(course_id=course.id)
+
         return CourseRead[LessonReadPartial](
             id=course.id,
             title=course.title,
@@ -72,24 +78,30 @@ class CourseBO:
             is_active=course.is_active,
             instructor_id=course.instructor_id,
             instructor_name=course.instructor.full_name,
-            lessons=lessons_list
+            students_enrolled=students_enrolled,
+            lessons=lessons_list,
         )
 
     async def get_all_courses(self, offset: int = 0, limit: int = 100) -> List[CourseReadPartial]:
         """Get a paginated list of all business_objects."""
         courses =  await self.course_dao.get_all_courses(offset, limit)
-        return [
-            CourseReadPartial(
-                id=course.id,
-                title=course.title,
-                description=course.description,
-                price=course.price,
-                is_active=course.is_active,
-                instructor_id=course.instructor_id,
-                instructor_name=course.instructor.full_name
+
+        course_list = []
+        for course in courses:
+            payments, students_enrolled = await self.payment_dao.get_all_payments_by_course(course_id=course.id)
+            course_list.append(
+                CourseReadPartial(
+                    id=course.id,
+                    title=course.title,
+                    description=course.description,
+                    is_active=course.is_active,
+                    price=course.price,
+                    instructor_id=course.instructor_id,
+                    instructor_name=course.instructor.full_name,
+                    students_enrolled=students_enrolled
+                )
             )
-            for course in courses
-        ]
+        return course_list
 
     async def update_course(
             self,
