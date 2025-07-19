@@ -85,7 +85,7 @@ class WorkBO:
             raise NotFoundError("Work not found")
         course = await self.course_dao.get_course_by_id(work.course_id)
         if course.instructor_id != instructor_id:
-            raise ValidationError("You do not have permission to delete this work")
+            raise PermissionDeniedError("You do not have permission to delete this work")
         await self.work_dao.delete_work(work)
 
     async def submit_answer(self, answer_data: WorkAnswerCreate, student_id: int) -> WorkAnswerWithNotifications:
