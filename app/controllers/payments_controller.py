@@ -24,17 +24,11 @@ async def create_payment(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to make a payment."
         )
-    try:
-        return await bo.create_payment(
-            payment_data=payment_data,
-            user_id=current_user.id,
-            course_id=course_id,
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    return await bo.create_payment(
+        payment_data=payment_data,
+        user_id=current_user.id,
+        course_id=course_id,
+    )
 
 
 @payments_router.get("/", response_model=PaginatedResponse[PaymentRead[CourseReadPartial]])
@@ -46,23 +40,17 @@ async def get_all_payments(
 ):
     """Get a paginated list of all payments."""
     offset = (page - 1) * per_page
-    try:
-        items = await bo.get_all_payments(
-            user_id=current_user.id,
-            offset=offset,
-            limit=per_page
-        )
-        return PaginatedResponse[PaymentRead](
-            page=page,
-            per_page=per_page,
-            total=len(items),
-            items=items
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    items = await bo.get_all_payments(
+        user_id=current_user.id,
+        offset=offset,
+        limit=per_page
+    )
+    return PaginatedResponse[PaymentRead](
+        page=page,
+        per_page=per_page,
+        total=len(items),
+        items=items
+    )
 
 
 @payments_router.get("/{payment_id}", response_model=PaymentRead[CourseReadPartial])
@@ -72,18 +60,7 @@ async def get_payment_by_id(
     current_user: User = Depends(fastapi_users.current_user()),
 ):
     """Get a payment by its ID."""
-    try:
-        return await bo.get_payment_by_id(
-            payment_id=payment_id,
-            user_id=current_user.id
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    return await bo.get_payment_by_id(
+        payment_id=payment_id,
+        user_id=current_user.id
+    )

@@ -63,8 +63,6 @@ application to run.
     python merge_default_dotenvs_in_dotenv.py
     ```
 
-
-
 ### Running with Docker Compose
 
 This is the recommended approach for development, ensuring all dependencies and services are correctly managed.
@@ -86,6 +84,17 @@ This is the recommended approach for development, ensuring all dependencies and 
     ```bash
     docker-compose -f compose.yml down
     ```
+
+### Running PyReverse to Generate Patterns UML Diagrams
+If you want to visualize the architecture of your application, you can use PyReverse to generate UML diagrams.
+
+- **Generate UML diagrams:**"
+    ```bash
+    pyreverse -o puml ./app/patterns
+    ```
+
+**It's recommended to use puml rendering tools like PlantUML 
+or any compatible viewer to visualize the generated `.puml` files.**
 
 ## API Documentation
 

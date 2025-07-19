@@ -44,7 +44,7 @@ app.add_middleware(
 
 # Logging Configuration
 # ------------------------------------------------------------------------------
-file_handler = logging.FileHandler("app.log")
+file_handler = logging.FileHandler("app.log") # Output log to a file
 console_handler = logging.StreamHandler()
 
 logging.basicConfig(

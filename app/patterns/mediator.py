@@ -7,6 +7,7 @@ from app.models.messages import Message
 from app.models.users import UserManager
 from app.patterns.data_access_objects.messages_dao import MessageDAO
 from app.patterns.data_access_objects.courses_dao import CourseDAO
+from app.utils.exceptions import NotFoundError, PermissionDeniedError
 
 
 # Mediator for Course Chat between students and instructors
@@ -34,47 +35,33 @@ class CourseChatMediator(ChatMediator):
 
     async def send_message(self, message_data: MessageCreate, sender_id: int) -> Message:
         """Coordinate the sending of a message to the course chat."""
-        try:
-            course = await self.course_dao.get_course_by_id(course_id=message_data.course_id)
-            if not course:
-                raise ValueError("Course not found")
+        course = await self.course_dao.get_course_by_id(course_id=message_data.course_id)
+        if not course:
+            raise NotFoundError("Course not found")
 
-            if course.instructor_id != sender_id:
-                my_courses = await self.user_manager.get_my_courses(user_id=sender_id)
-                logging.info(f"User {sender_id} my_courses: {my_courses}")
-                course_ids = [p.course.id for p in my_courses if p.course]
-                if course.id not in course_ids:
-                    raise ValueError("You do not have access to this course")
+        if course.instructor_id != sender_id:
+            my_courses = await self.user_manager.get_my_courses(user_id=sender_id)
+            logging.info(f"User {sender_id} my_courses: {my_courses}")
+            course_ids = [p.course.id for p in my_courses if p.course]
+            if course.id not in course_ids:
+                raise PermissionDeniedError("You do not have access to this course")
 
-            message_dict = message_data.model_dump()
-            message_dict.update({"sender_id": sender_id})
-            return await self.message_dao.create_message(message_dict)
-
-        except ValueError:
-            raise
-        except Exception as e:
-            logging.exception(f"Unexpected error in send_message: {e}")
-            raise
+        message_dict = message_data.model_dump()
+        message_dict.update({"sender_id": sender_id})
+        return await self.message_dao.create_message(message_dict)
 
     async def get_messages(self, course_id: int, user_id: int) -> List[Message]:
         """Coordinate retrieving all messages from a course chat."""
-        try:
-            course = await self.course_dao.get_course_by_id(course_id=course_id)
-            if not course:
-                raise ValueError("Course not found")
+        course = await self.course_dao.get_course_by_id(course_id=course_id)
+        if not course:
+            raise NotFoundError("Course not found")
 
-            if course.instructor_id != user_id:
-                my_courses = await self.user_manager.get_my_courses(user_id=user_id)
-                logging.debug(f"User {user_id} my_courses: {my_courses}")
-                course_ids = [p.course.id for p in my_courses if p.course]
-                if course.id not in course_ids:
-                    raise ValueError("You do not have access to this course")
+        if course.instructor_id != user_id:
+            my_courses = await self.user_manager.get_my_courses(user_id=user_id)
+            logging.debug(f"User {user_id} my_courses: {my_courses}")
+            course_ids = [p.course.id for p in my_courses if p.course]
+            if course.id not in course_ids:
+                raise PermissionDeniedError("You do not have access to this course")
 
-            messages = await self.message_dao.get_messages_by_course(course_id)
-            return list(messages) if not isinstance(messages, list) else messages
-
-        except ValueError:
-            raise
-        except Exception as e:
-            logging.exception(f"Unexpected error in get_messages: {e}")
-            raise
+        messages = await self.message_dao.get_messages_by_course(course_id)
+        return list(messages) if not isinstance(messages, list) else messages

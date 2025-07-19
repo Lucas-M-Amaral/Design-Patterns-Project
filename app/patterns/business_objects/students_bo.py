@@ -1,6 +1,6 @@
 from typing import List, Optional
-
 from fastapi import Depends
+
 from app.models.users import UserManager, get_user_manager
 from app.schemas.course_schemas import CourseReadPartial
 from app.patterns.chain_of_responsability import ConcreteLessonProgressHandler

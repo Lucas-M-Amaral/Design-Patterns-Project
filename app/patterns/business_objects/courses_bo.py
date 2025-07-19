@@ -192,7 +192,9 @@ class CourseBO:
 
         course = await self.course_dao.get_course_by_id(course_id=course_id)
         if course.instructor_id != instructor_id:
-            raise PermissionDeniedError("You do not have permission to delete lessons in this course")
+            raise PermissionDeniedError(
+                "You do not have permission to delete lessons in this course"
+            )
         await self.lesson_dao.delete_lesson(lesson=lesson)
 
     async def clone_lesson(
