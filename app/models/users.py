@@ -114,9 +114,13 @@ class UserManager(BaseUserManager[User, int]):
 
     async def mark_lesson_completed(self, user_id: int, lesson_id: int):
         """Mark a lesson as completed for the user."""
-        lesson_progression = await self.user_db.get_lesson_progress(user_id=user_id, lesson_id=lesson_id) # noqa
+        lesson_progression = await self.user_db.get_lesson_progress( # noqa
+            user_id=user_id, lesson_id=lesson_id
+        )
         lesson_progression.completed = True
-        await self.user_db.mark_lesson_completed(lesson_progression=lesson_progression) # noqa
+        return await self.user_db.mark_lesson_completed( # noqa
+            lesson_progression=lesson_progression,
+        )
 
 async def get_user_manager(user_db: UserDatabase = Depends(get_user_db)):
     """Dependency to get the user manager."""

@@ -11,7 +11,8 @@ from app.schemas.course_schemas import (
     CourseUpdate,
     LessonCreate,
     LessonRead,
-    LessonReadPartial
+    LessonReadPartial,
+    LessonProgressionRead
 )
 
 courses_router = APIRouter(prefix="/courses", tags=["courses"])

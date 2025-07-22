@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.utils.models import Base
 from app.models.payments import Payment
-from app.models.courses import Course, LessonProgression
+from app.models.courses import Lesson, LessonProgression
 
 # Load environment variables from .env file
 dotenv.load_dotenv()
@@ -58,7 +58,7 @@ class UserDatabase(SQLAlchemyUserDatabase):
         """Get all lesson progressions for a user with optional course filtering."""
         stmt = select(LessonProgression).where(LessonProgression.user_id == user_id)
         if course_id is not None:
-            stmt = stmt.where(Course.id == course_id)
+            stmt = stmt.join(LessonProgression.lesson).where(Lesson.course_id == course_id)
         stmt = stmt.offset(offset).limit(limit).options(
             selectinload(LessonProgression.lesson)
         )
@@ -74,12 +74,13 @@ class UserDatabase(SQLAlchemyUserDatabase):
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
-    async def mark_lesson_completed(self, lesson_progression: LessonProgression):
+    async def mark_lesson_completed(self, lesson_progression: LessonProgression) -> LessonProgression:
         """Mark a lesson as completed for the user."""
         lesson_progression.completed = True
         self.session.add(lesson_progression)
         await self.session.commit()
         await self.session.refresh(lesson_progression)
+        return lesson_progression
 
 
 async def create_db_and_tables():

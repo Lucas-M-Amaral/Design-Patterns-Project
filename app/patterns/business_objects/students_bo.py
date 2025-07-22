@@ -109,9 +109,24 @@ class StudentBO:
 
         handler = ConcreteLessonProgressHandler(lesson=lesson)
 
-        can_access = handler.handle(user_id=student_id, user_progress=progress_dict)
-        if can_access:
-            progression = progress_dict.get(lesson_id)
-            if not progression or not progression.completed:
-                await self.user_manager.mark_lesson_completed(student_id, lesson_id)
-        return can_access
+        return handler.handle(user_id=student_id, user_progress=progress_dict)
+
+    async def mark_lesson_completed(
+            self, student_id: int, lesson_id: int, course_id: int
+    ) -> LessonProgressionRead:
+        """Mark a lesson as completed for a student."""
+        if not await self.can_access_lesson(student_id, lesson_id, course_id):
+            raise PermissionDeniedError("You do not have permission to change lesson progression")
+
+        lesson_progression = await self.user_manager.mark_lesson_completed(
+            user_id=student_id, lesson_id=lesson_id
+        )
+        return LessonProgressionRead(
+            id=lesson_progression.id,
+            user_id=lesson_progression.user_id,
+            lesson_id=lesson_progression.lesson_id,
+            lesson_title=lesson_progression.lesson.title,
+            lesson_type=lesson_progression.lesson.lesson_type,
+            lesson_prerequisite_id=lesson_progression.lesson.prerequisite_id,
+            completed=lesson_progression.completed
+        )
