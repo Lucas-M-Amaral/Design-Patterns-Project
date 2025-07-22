@@ -98,3 +98,23 @@ async def get_course_progression(
         page=page,
         per_page=per_page
     )
+
+
+@users_router.patch("/my-course-progression/{course_id}/{lesson_id}/", response_model=LessonProgressionRead)
+async def mark_lesson_completed(
+    course_id: int,
+    lesson_id: int,
+    bo: StudentBO = Depends(StudentBO.from_depends),
+    current_user: User = Depends(fastapi_users.current_user()),
+):
+    """Mark a lesson as completed for the current student."""
+    if not current_user.is_student:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this resource."
+        )
+    return await bo.mark_lesson_completed(
+        student_id=current_user.id,
+        lesson_id=lesson_id,
+        course_id=course_id,
+    )
