@@ -45,7 +45,6 @@ class Course(Base):
         "Lesson",
         back_populates="course",
         cascade="all, delete-orphan",
-        order_by="Lesson.order",
         lazy="selectin"
     )
     payments = relationship(
@@ -86,7 +85,6 @@ class Lesson(Base):
         nullable=False,
         default=LessonTypeEnum.VIDEO
     )
-    order: Mapped[int] = mapped_column(nullable=False)
     file_path: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     quiz_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
@@ -107,7 +105,6 @@ class Lesson(Base):
         back_populates="parent",
         foreign_keys=[parent_id],
         cascade="all, delete-orphan",
-        order_by="Lesson.order",
         lazy="selectin"
     )
 

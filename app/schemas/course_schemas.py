@@ -10,7 +10,6 @@ class LessonCreate(BaseModel):
     title: str = Field(..., max_length=255, description="Title of the lesson")
     description: str | None = Field(None, max_length=1000, description="Detailed description of the lesson content")
     lesson_type: LessonTypeEnum = Field(..., description="Type of the lesson content")
-    order: int = Field(..., ge=1, description="Position of the lesson in the course sequence")
     file_path: str | None = Field(None, max_length=255, description="Path to the lesson media file if applicable")
     quiz_data: dict | None = Field(None, description="JSON structure containing quiz questions and answers")
     parent_id: int | None = Field(None, description="ID of the parent module if this is a sub-lesson")
@@ -22,7 +21,6 @@ class LessonUpdate(BaseModel):
     title: str | None = Field(None, max_length=255, description="New title for the lesson")
     description: str | None = Field(None, max_length=1000, description="Updated description of the lesson")
     lesson_type: LessonTypeEnum | None = Field(None, description="Updated lesson type")
-    order: int | None = Field(None, ge=1, description="New position in the course sequence")
     file_path: str | None = Field(None, max_length=255, description="Updated path to the lesson media file")
     quiz_data: dict | None = Field(None, description="Updated quiz data structure")
 
@@ -34,7 +32,6 @@ class LessonReadPartial(BaseModel):
     id: int = Field(..., description="Unique identifier for the lesson")
     title: str = Field(..., description="Title of the lesson")
     lesson_type: LessonTypeEnum = Field(..., description="Type of the lesson")
-    order: int = Field(..., description="Position in course sequence")
     course_id: int = Field(..., description="ID of the parent course")
     parent_id: int | None = Field(None, description="ID of the parent module if this is a sub-lesson")
 
@@ -47,7 +44,6 @@ class LessonRead(BaseModel, Generic[T]):
     title: str = Field(..., description="Title of the lesson")
     description: str | None = Field(None, description="Detailed lesson description")
     lesson_type: LessonTypeEnum = Field(..., description="Type of the lesson")
-    order: int = Field(..., description="Position in course sequence")
     file_path: str | None = Field(None, description="Path to lesson media file")
     quiz_data: dict | None = Field(None, description="Quiz questions and answers")
     course_id: int = Field(..., description="ID of the parent course")
