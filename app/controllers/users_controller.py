@@ -56,7 +56,7 @@ async def get_my_courses(
         )
 
     offset = (page - 1) * per_page
-    courses = await student_bo. get_student_courses(
+    courses = await student_bo.get_student_courses(
         student_id=current_user.id,
         offset=offset,
         limit=per_page

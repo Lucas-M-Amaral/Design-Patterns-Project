@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.utils.models import Base
 from app.models.payments import Payment
-from app.models.courses import Lesson, LessonProgression
+from app.models.courses import Course, Lesson, LessonProgression
 
 # Load environment variables from .env file
 dotenv.load_dotenv()
@@ -45,9 +45,15 @@ class UserDatabase(SQLAlchemyUserDatabase):
 
     async def get_my_courses(self, user_id: int, offset: int = 0, limit: int = 100):
         """Get all courses for a user with pagination."""
-        stmt = select(Payment).where(Payment.user_id == user_id).offset(offset).limit(limit)
-        stmt = stmt.options(
-            selectinload(Payment.course)
+        stmt = (
+            select(Payment)
+            .where(Payment.user_id == user_id)
+            .offset(offset)
+            .limit(limit)
+            .options(
+                selectinload(Payment.course).selectinload(Course.instructor),
+                selectinload(Payment.user)
+            )
         )
         result = await self.session.execute(stmt)
         return result.scalars().all()
